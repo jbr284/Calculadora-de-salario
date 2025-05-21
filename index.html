@@ -3,21 +3,328 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Calculadora de Salário</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#2196f3" />
-  <link rel="icon" href="icon-192.png" />
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js")
-        .then(() => console.log("Service Worker registrado"))
-        .catch(err => console.error("Erro no SW:", err));
+  <style>
+    body { font-family: Arial; background: #f9f9f9; padding: 20px; }
+    .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; }
+    h1 { text-align: center; }
+    fieldset { margin-bottom: 20px; padding: 15px; border-radius: 6px; }
+    legend { font-weight: bold; color: #007acc; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 8px; margin-top: 4px; }
+    button { background: green; color: white; border: none; padding: 10px 20px; font-size: 16px; margin-top: 20px; cursor: pointer; border-radius: 4px; }
+    .result { background: #eef; padding: 15px; border-radius: 6px; margin-top: 20px; }
+    .result h2 { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
+    th { background-color: #ddd; }
+    .feriado-box {
+      background:#e0f0ff;
+      padding:6px 12px;
+      border-radius:6px;
+      font-size:14px;
+      cursor:pointer;
+      user-select:none;
+      margin-right:6px;
+      margin-bottom:6px;
     }
-  </script>
+  </style>
 </head>
 <body>
-  <h1>Calculadora de Salário</h1>
-  <p>Seu app PWA está funcionando!</p>
+  <div class="container">
+    <h1>Cálculo de Salário Mensal</h1>
+    <form id="formulario">
+      <input type="hidden" id="diasUteis" />
+      <input type="hidden" id="domFeriados" />
+
+      <fieldset>
+        <legend>Dados Pessoais</legend>
+        <label>Salário Mensal (R$)</label>
+        <input type="number" id="salario" required />
+        <label>Dias Trabalhados</label>
+<div style="display: flex; gap: 10px; align-items: center;">
+  <label><input type="radio" name="tipoDias" value="mensal" onclick="document.getElementById('diasTrab').value = 30" /> Mensal</label>
+  <label><input type="radio" name="tipoDias" value="ferias" onclick="document.getElementById('diasTrab').value = ''" /> Mês de férias</label>
+</div>
+<input type="number" id="diasTrab" placeholder="Digite os dias trabalhados" required />
+        <label>Dependentes</label>
+        <input type="number" id="dependentes" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Mês de Referência</legend>
+        <label>Escolha o mês</label>
+        <input type="month" id="mesReferencia" onchange="preencherDiasMes()" />
+        <label style="font-weight: bold; color: #007acc;">Feriados (estaduais e municipais)<br><span style='font-weight: normal; font-size: 13px; color: #555;'>(opcional, clique para adicionar os feriados locais do mês)</span></label>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+            <select id="diaFeriado">
+  <option value="">Dia</option>
+  <option value="01">1</option>
+  <option value="02">2</option>
+  <option value="03">3</option>
+  <option value="04">4</option>
+  <option value="05">5</option>
+  <option value="06">6</option>
+  <option value="07">7</option>
+  <option value="08">8</option>
+  <option value="09">9</option>
+  <option value="10">10</option>
+  <option value="11">11</option>
+  <option value="12">12</option>
+  <option value="13">13</option>
+  <option value="14">14</option>
+  <option value="15">15</option>
+  <option value="16">16</option>
+  <option value="17">17</option>
+  <option value="18">18</option>
+  <option value="19">19</option>
+  <option value="20">20</option>
+  <option value="21">21</option>
+  <option value="22">22</option>
+  <option value="23">23</option>
+  <option value="24">24</option>
+  <option value="25">25</option>
+  <option value="26">26</option>
+  <option value="27">27</option>
+  <option value="28">28</option>
+  <option value="29">29</option>
+  <option value="30">30</option>
+  <option value="31">31</option>
+</select>
+            <button type="button" onclick="adicionarFeriado()">Adicionar</button>
+            <button type="button" onclick="limparFeriados()" style="background:#c00;">Limpar Todos</button>
+          </div>
+          <div id="listaFeriados" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;"></div>
+        </div>
+        <input type="hidden" id="feriadosExtras" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Proventos</legend>
+        <label>Horas Extra 50%</label>
+        <input type="number" id="he50" />
+        <label>Horas Extra 60%</label>
+        <input type="number" id="he60" />
+        <label>Horas Extra 80%</label>
+        <input type="number" id="he80" />
+        <label>Horas Extra 100%</label>
+        <input type="number" id="he100" />
+        <label>Adicional Noturno (horas)</label>
+        <input type="number" id="noturno" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Descontos</legend>
+        <label>Faltas (dias)</label>
+        <input type="number" id="faltas" />
+        <label>Atrasos (horas)</label>
+        <input type="number" id="atrasos" />
+        <label>Convênio SESI</label>
+<select id="plano">
+  <option value="nenhum">Nenhum</option>
+  <option value="basico_individual">Básico Individual - R$26</option>
+  <option value="basico_familiar">Básico Familiar - R$52</option>
+  <option value="plus_individual">Plus Individual - R$104</option>
+  <option value="plus_familiar">Plus Familiar - R$164</option>
+</select>
+        <label>Mensalidade Sindical</label>
+        <select id="sindicato">
+          <option value="sim">Associado - R$47,50</option>
+          <option value="nao">Não Associado</option>
+        </select>
+        <label>Empréstimo Consignado (R$)</label>
+        <input type="number" id="emprestimo" />
+        
+      </fieldset>
+
+      <button type="button" onclick="calcular()">Calcular</button>
+      <button type="button" onclick="salvarDadosFixos()">Salvar Dados Fixos</button>
+    </form>
+
+    <div class="result" id="resultado" style="display:none;"></div>
+  </div>
+
+  <script>
+    function adicionarFeriado() {
+      const dia = document.getElementById('diaFeriado').value;
+      const mesAno = document.getElementById('mesReferencia').value;
+      if (!dia || !mesAno) return;
+      const [ano, mes] = mesAno.split('-');
+      const data = `${dia}/${mes}/${ano}`;
+
+      const campo = document.getElementById('feriadosExtras');
+      const feriados = campo.value ? campo.value.split(',') : [];
+      if (feriados.includes(data)) return;
+      feriados.push(data);
+      campo.value = feriados.join(',');
+
+      const div = document.createElement('div');
+      div.textContent = data;
+      div.className = 'feriado-box';
+      div.title = 'Clique para remover';
+      div.onclick = () => {
+        const novaLista = feriados.filter(f => f !== data);
+        campo.value = novaLista.join(',');
+        div.remove();
+        preencherDiasMes();
+      };
+      document.getElementById('listaFeriados').appendChild(div);
+      document.getElementById('diaFeriado').value = "";
+      preencherDiasMes();
+    }
+
+    function limparFeriados() {
+      if (confirm('Tem certeza que deseja remover todos os feriados adicionados?')) {
+        document.getElementById('feriadosExtras').value = '';
+        document.getElementById('listaFeriados').innerHTML = '';
+      }
+    }
+  
+    function calcular() {
+  const salario = parseFloat(document.getElementById('salario').value) || 0;
+  const diasTrab = parseInt(document.getElementById('diasTrab').value) || 0;
+  const adiantamento = (salario / 30) * diasTrab * 0.4;
+  const dependentes = parseInt(document.getElementById('dependentes').value) || 0;
+  const faltas = parseFloat(document.getElementById('faltas').value) || 0;
+  const atrasos = parseFloat(document.getElementById('atrasos').value) || 0;
+  const he50 = parseFloat(document.getElementById('he50').value) || 0;
+  const he60 = parseFloat(document.getElementById('he60').value) || 0;
+  const he80 = parseFloat(document.getElementById('he80').value) || 0;
+  const he100 = parseFloat(document.getElementById('he100').value) || 0;
+  const noturno = parseFloat(document.getElementById('noturno').value) || 0;
+  const plano = document.getElementById('plano').value;
+  const sindicato = document.getElementById('sindicato').value;
+  const emprestimo = parseFloat(document.getElementById('emprestimo').value) || 0;
+  const diasUteis = parseInt(document.getElementById('diasUteis').value) || 30;
+
+  const valorDia = salario / 30;
+  const valorHora = salario / 220;
+
+  const vencBase = (salario / 30) * diasTrab;
+  const valorHE50 = he50 * (salario / 220) * 1.5;
+  const valorHE60 = he60 * (salario / 220) * 1.6;
+  const valorHE80 = he80 * (salario / 220) * 1.8;
+  const valorHE100 = he100 * (salario / 220) * 2.0;
+  const valorNoturno = (salario * 0.35 / 220) * noturno;
+
+  const descontoFaltas = faltas * valorDia;
+  const descontoAtrasos = atrasos * valorHora;
+  let descontoPlano = 0;
+  if (plano === 'basico_individual') descontoPlano = 26;
+  else if (plano === 'basico_familiar') descontoPlano = 52;
+  else if (plano === 'plus_individual') descontoPlano = 104;
+  else if (plano === 'plus_familiar') descontoPlano = 164;
+  const descontoVA = 23.97;
+
+  const domingosFeriados = parseInt(document.getElementById("domFeriados").value) || 0;
+  const totalHE = valorHE50 + valorHE60 + valorHE80 + valorHE100;
+  const dsrHE = (totalHE / diasUteis) * domingosFeriados;
+  const dsrNoturno = (valorNoturno / diasUteis) * domingosFeriados;
+  const bruto = vencBase + totalHE + valorNoturno + dsrHE + dsrNoturno;
+
+  // Cálculo do INSS
+  let inss = 0;
+  const descontoSindicato = sindicato === 'sim' ? 47.5 : 0;
+  const baseINSS = bruto - descontoSindicato;
+  if (baseINSS <= 1412.00) inss = baseINSS * 0.075;
+  else if (baseINSS <= 2666.68) inss = baseINSS * 0.09 - 21.18;
+  else if (baseINSS <= 4000.03) inss = baseINSS * 0.12 - 101.18;
+  else if (baseINSS <= 7786.02) inss = baseINSS * 0.14 - 181.18;
+  else inss = 908.85;
+
+  // Base IRRF
+  const baseIRRF = bruto - inss - (dependentes * 189.59) - descontoSindicato;
+  let irrf = 0;
+  if (baseIRRF <= 2112.00) irrf = 0;
+  else if (baseIRRF <= 2826.65) irrf = baseIRRF * 0.075 - 158.4;
+  else if (baseIRRF <= 3751.05) irrf = baseIRRF * 0.15 - 370.4;
+  else if (baseIRRF <= 4664.68) irrf = baseIRRF * 0.225 - 651.73;
+  else irrf = baseIRRF * 0.275 - 884.96;
+
+    const descontos = descontoVA + descontoAtrasos + descontoPlano + descontoSindicato + emprestimo + adiantamento + inss + irrf;
+  const liquido = bruto - descontos;
+
+  const resultado = document.getElementById('resultado');
+  resultado.innerHTML = `
+    <h2>Resultado</h2>
+    <table>
+      <tr><th colspan="2">Proventos</th></tr>
+      <tr><td>Salário Base</td><td>R$ ${vencBase.toFixed(2)}</td></tr>
+      <tr><td>Hora Extra 50%</td><td>R$ ${valorHE50.toFixed(2)}</td></tr>
+      <tr><td>Hora Extra 60%</td><td>R$ ${valorHE60.toFixed(2)}</td></tr>
+      <tr><td>Hora Extra 80%</td><td>R$ ${valorHE80.toFixed(2)}</td></tr>
+      <tr><td>Hora Extra 100%</td><td>R$ ${valorHE100.toFixed(2)}</td></tr>
+      <tr><td>Adicional Noturno</td><td>R$ ${valorNoturno.toFixed(2)}</td></tr>
+      <tr><td>DSR sobre Horas Extras</td><td>R$ ${dsrHE.toFixed(2)}</td></tr>
+      <tr><td>DSR sobre Adicional Noturno</td><td>R$ ${dsrNoturno.toFixed(2)}</td></tr>
+      <tr><td><strong>Total Bruto</strong></td><td><strong>R$ ${bruto.toFixed(2)}</strong></td></tr>
+
+      <tr><th colspan="2">Descontos</th></tr>
+      <tr><td>Faltas</td><td>R$ ${descontoFaltas.toFixed(2)}</td></tr>
+      <tr><td>Atrasos</td><td>R$ ${descontoAtrasos.toFixed(2)}</td></tr>
+      <tr><td>Convênio SESI</td><td>R$ ${descontoPlano.toFixed(2)}</td></tr>
+      <tr><td>Sindicato</td><td>R$ ${descontoSindicato.toFixed(2)}</td></tr>
+      <tr><td>Empréstimo</td><td>R$ ${emprestimo.toFixed(2)}</td></tr>
+      <tr><td>INSS</td><td>R$ ${inss.toFixed(2)}</td></tr>
+      <tr><td>IRRF</td><td>R$ ${irrf.toFixed(2)}</td></tr>
+      
+      <tr><td>Adiantamento</td><td>R$ ${adiantamento.toFixed(2)}</td></tr>
+      <tr><td>Vale Alimentação</td><td>R$ ${descontoVA.toFixed(2)}</td></tr>
+      <tr><th colspan="2">Resultado</th></tr>
+      <tr><td><strong>Salário Líquido</strong></td><td><strong>R$ ${liquido.toFixed(2)}</strong></td></tr>
+    </table>`;
+  resultado.style.display = 'block';
+    }
+
+    function salvarDadosFixos() {
+      const dados = {
+        salario: document.getElementById('salario').value,
+        diasTrab: document.getElementById('diasTrab').value,
+        dependentes: document.getElementById('dependentes').value,
+        plano: document.getElementById('plano').value,
+        sindicato: document.getElementById('sindicato').value
+      };
+      localStorage.setItem('dadosFixos', JSON.stringify(dados));
+      alert('Dados fixos salvos com sucesso!');
+    }
+
+    function preencherDiasMes() {
+      const mesAno = document.getElementById('mesReferencia').value;
+      if (!mesAno) return;
+      const [ano, mes] = mesAno.split('-').map(Number);
+      const diasNoMes = new Date(ano, mes, 0).getDate();
+      let diasUteis = 0;
+      let domingos = 0;
+      for (let d = 1; d <= diasNoMes; d++) {
+        const data = new Date(ano, mes - 1, d);
+        const diaSemana = data.getDay();
+        if (diaSemana >= 1 && diaSemana <= 6) diasUteis++;
+        if (diaSemana === 0) domingos++;
+      }
+
+      const feriadosFixos = ["01/01", "21/04", "01/05", "07/09", "12/10", "02/11", "15/11", "25/12"];
+      let feriadosNacionaisNoMes = 0;
+      feriadosFixos.forEach(fix => {
+        const [dia, mesFix] = fix.split('/');
+        if (parseInt(mesFix) === mes) {
+          const dataFeriado = new Date(ano, mes - 1, parseInt(dia));
+          const diaSemana = dataFeriado.getDay();
+          if (diaSemana >= 1 && diaSemana <= 6) feriadosNacionaisNoMes++;
+        }
+      });
+
+      const feriadosExtras = document.getElementById('feriadosExtras').value;
+      const qtdFeriados = feriadosExtras ? feriadosExtras.split(',').length : 0;
+
+      document.getElementById('diasUteis').value = diasUteis - qtdFeriados - feriadosNacionaisNoMes;
+      document.getElementById('domFeriados').value = domingos + qtdFeriados + feriadosNacionaisNoMes;
+    }
+  
+    window.onload = function() {
+      preencherDiasMes();
+    };
+  </script>
 </body>
 </html>
