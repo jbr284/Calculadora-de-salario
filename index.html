@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Salário</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2196f3" />
+  <link rel="icon" href="icon-192.png" />
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .then(() => console.log("Service Worker registrado"))
+        .catch(err => console.error("Erro no SW:", err));
+    }
+  </script>
+</head>
+<body>
+  <h1>Calculadora de Salário</h1>
+  <p>Seu app PWA está funcionando!</p>
+</body>
+</html>
