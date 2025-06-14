@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -124,10 +123,10 @@
         <label>Convênio SESI</label>
 <select id="plano">
   <option value="nenhum">Nenhum</option>
-  <option value="basico_individual">Básico Individual - R$26</option>
-  <option value="basico_familiar">Básico Familiar - R$52</option>
-  <option value="plus_individual">Plus Individual - R$104</option>
-  <option value="plus_familiar">Plus Familiar - R$164</option>
+  <option value="basico_individual">Básico Individual - R$29</option>
+  <option value="basico_familiar">Básico Familiar - R$58</option>
+  <option value="plus_individual">Plus Individual - R$115</option>
+  <option value="plus_familiar">Plus Familiar - R$180</option>
 </select>
         <label>Mensalidade Sindical</label>
         <select id="sindicato">
@@ -212,10 +211,10 @@
   const descontoFaltas = faltas * valorDia;
   const descontoAtrasos = atrasos * valorHora;
   let descontoPlano = 0;
-  if (plano === 'basico_individual') descontoPlano = 26;
-  else if (plano === 'basico_familiar') descontoPlano = 52;
-  else if (plano === 'plus_individual') descontoPlano = 104;
-  else if (plano === 'plus_familiar') descontoPlano = 164;
+  if (plano === 'basico_individual') descontoPlano = 29;
+  else if (plano === 'basico_familiar') descontoPlano = 58;
+  else if (plano === 'plus_individual') descontoPlano = 115;
+  else if (plano === 'plus_familiar') descontoPlano = 180;
   const descontoVA = 23.97;
 
   const domingosFeriados = parseInt(document.getElementById("domFeriados").value) || 0;
@@ -322,8 +321,9 @@
       document.getElementById('domFeriados').value = domingos + qtdFeriados + feriadosNacionaisNoMes;
     }
   
-    window.onload = function() {
-      preencherDiasMes();
+ window.onload = function() {
+      restaurarDadosFixos();  // Chama a função para restaurar os dados
+      preencherDiasMes();      // Preenche o número de dias úteis e feriados
     };
   </script>
 </body>
