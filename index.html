@@ -226,21 +226,21 @@
   // Cálculo do INSS
   let inss = 0;
   const descontoSindicato = sindicato === 'sim' ? 47.5 : 0;
-  const baseINSS = bruto - descontoSindicato;
-  if (baseINSS <= 1412.00) inss = baseINSS * 0.075;
-  else if (baseINSS <= 2666.68) inss = baseINSS * 0.09 - 21.18;
-  else if (baseINSS <= 4000.03) inss = baseINSS * 0.12 - 101.18;
-  else if (baseINSS <= 7786.02) inss = baseINSS * 0.14 - 181.18;
+  const baseINSS = bruto;
+  if (baseINSS <= 1518.00) inss = baseINSS * 0.075;
+  else if (baseINSS <= 2793.88) inss = baseINSS * 0.09 - 22.77;
+  else if (baseINSS <= 4190.83) inss = baseINSS * 0.12 - 106.59;
+  else if (baseINSS <= 8157.41) inss = baseINSS * 0.14 - 190.40;
   else inss = 908.85;
 
   // Base IRRF
-  const baseIRRF = bruto - inss - (dependentes * 189.59) - descontoSindicato;
+  const baseIRRF = bruto - inss - (dependentes * 189.59);
   let irrf = 0;
   if (baseIRRF <= 2112.00) irrf = 0;
-  else if (baseIRRF <= 2826.65) irrf = baseIRRF * 0.075 - 158.4;
-  else if (baseIRRF <= 3751.05) irrf = baseIRRF * 0.15 - 370.4;
-  else if (baseIRRF <= 4664.68) irrf = baseIRRF * 0.225 - 651.73;
-  else irrf = baseIRRF * 0.275 - 884.96;
+  else if (baseIRRF <= 2826.65) irrf = baseIRRF * 0.075 - 182.16;
+  else if (baseIRRF <= 3751.05) irrf = baseIRRF * 0.15 - 394.16;
+  else if (baseIRRF <= 4664.68) irrf = baseIRRF * 0.225 - 675.49;
+  else irrf = baseIRRF * 0.275 - 908.75;
 
     const descontos = descontoVA + descontoAtrasos + descontoPlano + descontoSindicato + emprestimo + adiantamento + inss + irrf;
   const liquido = bruto - descontos;
@@ -321,7 +321,19 @@
       document.getElementById('domFeriados').value = domingos + qtdFeriados + feriadosNacionaisNoMes;
     }
   
- window.onload = function() {
+ // Função para restaurar os dados do localStorage
+    function restaurarDadosFixos() {
+      const dadosSalvos = JSON.parse(localStorage.getItem('dadosFixos'));
+      if (dadosSalvos) {
+        document.getElementById('salario').value = dadosSalvos.salario;
+        document.getElementById('diasTrab').value = dadosSalvos.diasTrab;
+        document.getElementById('dependentes').value = dadosSalvos.dependentes;
+        document.getElementById('plano').value = dadosSalvos.plano;
+        document.getElementById('sindicato').value = dadosSalvos.sindicato;
+      }
+    }
+
+    window.onload = function() {
       restaurarDadosFixos();  // Chama a função para restaurar os dados
       preencherDiasMes();      // Preenche o número de dias úteis e feriados
     };
