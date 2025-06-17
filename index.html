@@ -244,6 +244,9 @@
 
     const descontos = descontoVA + descontoAtrasos + descontoPlano + descontoSindicato + emprestimo + adiantamento + inss + irrf;
   const liquido = bruto - descontos;
+  const liquidoMensal = liquido + adiantamento; // Salário líquido mensal
+
+  const descontoTotal = descontoFaltas + descontoAtrasos + descontoPlano + descontoSindicato + emprestimo + inss + irrf + descontoVA + adiantamento;
 
   const resultado = document.getElementById('resultado');
   resultado.innerHTML = `
@@ -271,8 +274,10 @@
       
       <tr><td>Adiantamento</td><td>R$ ${adiantamento.toFixed(2)}</td></tr>
       <tr><td>Vale Alimentação</td><td>R$ ${descontoVA.toFixed(2)}</td></tr>
+      <tr><td><strong>Total de Descontos</strong></td><td><strong>R$ ${descontoTotal.toFixed(2)}</strong></td></tr>
       <tr><th colspan="2">Resultado</th></tr>
       <tr><td><strong>Salário Líquido</strong></td><td><strong>R$ ${liquido.toFixed(2)}</strong></td></tr>
+      <tr><td><strong>Salário Líquido Mensal</strong></td><td><strong>R$ ${liquidoMensal.toFixed(2)}</strong></td></tr>
     </table>`;
   resultado.style.display = 'block';
     }
