@@ -1,10 +1,11 @@
 {
-  "name": "Calculadora de Sal\u00e1rio",
-  "short_name": "Sal\u00e1rio",
+  "name": "Calculadora de Salário",
+  "short_name": "Salário",
   "start_url": "/Calculadora-de-salario/",
+  "scope": "/Calculadora-de-salario/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2196f3",
+  "theme_color": "#0d47a1",
   "icons": [
     {
       "src": "icon-192.png",
