@@ -29,10 +29,6 @@
       margin-bottom:6px;
     }
   </style>
-  <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-<meta name="theme-color" content="#0d47a1">
-
 </head>
 <body>
   <div class="container">
@@ -346,14 +342,6 @@
       restaurarDadosFixos();  // Chama a função para restaurar os dados
       preencherDiasMes();      // Preenche o número de dias úteis e feriados
     };
-    <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(() => console.log('Service Worker registrado com sucesso!'))
-      .catch(error => console.log('Erro ao registrar Service Worker:', error));
-  }
-</script>
-
   </script>
 </body>
 </html>
