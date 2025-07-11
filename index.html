@@ -32,7 +32,6 @@
   <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#0d47a1">
-
 </head>
 <body>
   <div class="container">
@@ -114,6 +113,8 @@
         <input type="number" id="he80" />
         <label>Horas Extra 100%</label>
         <input type="number" id="he100" />
+        <label>Horas Extra 150%</label>
+        <input type="number" id="he150" />
         <label>Adicional Noturno (horas)</label>
         <input type="number" id="noturno" />
       </fieldset>
@@ -196,6 +197,7 @@
   const he60 = parseFloat(document.getElementById('he60').value) || 0;
   const he80 = parseFloat(document.getElementById('he80').value) || 0;
   const he100 = parseFloat(document.getElementById('he100').value) || 0;
+  const he150 = parseFloat(document.getElementById('he150').value) || 0;
   const noturno = parseFloat(document.getElementById('noturno').value) || 0;
   const plano = document.getElementById('plano').value;
   const sindicato = document.getElementById('sindicato').value;
@@ -210,6 +212,7 @@
   const valorHE60 = he60 * (salario / 220) * 1.6;
   const valorHE80 = he80 * (salario / 220) * 1.8;
   const valorHE100 = he100 * (salario / 220) * 2.0;
+  const valorHE150 = he150 * (salario / 220) * 2.5;
   const valorNoturno = (salario * 0.35 / 220) * noturno;
 
   const descontoFaltas = faltas * valorDia;
@@ -262,6 +265,7 @@
       <tr><td>Hora Extra 60%</td><td>R$ ${valorHE60.toFixed(2)}</td></tr>
       <tr><td>Hora Extra 80%</td><td>R$ ${valorHE80.toFixed(2)}</td></tr>
       <tr><td>Hora Extra 100%</td><td>R$ ${valorHE100.toFixed(2)}</td></tr>
+       <tr><td>Hora Extra 150%</td><td>R$ ${valorHE150.toFixed(2)}</td></tr>
       <tr><td>Adicional Noturno</td><td>R$ ${valorNoturno.toFixed(2)}</td></tr>
       <tr><td>DSR sobre Horas Extras</td><td>R$ ${dsrHE.toFixed(2)}</td></tr>
       <tr><td>DSR sobre Adicional Noturno</td><td>R$ ${dsrNoturno.toFixed(2)}</td></tr>
@@ -346,13 +350,11 @@
       restaurarDadosFixos();  // Chama a função para restaurar os dados
       preencherDiasMes();      // Preenche o número de dias úteis e feriados
     };
-    
-  if ('serviceWorker' in navigator) {
+      if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js')
       .then(() => console.log('Service Worker registrado com sucesso!'))
       .catch(error => console.log('Erro ao registrar Service Worker:', error));
   }
-
   </script>
 </body>
 </html>
