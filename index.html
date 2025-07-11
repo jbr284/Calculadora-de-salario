@@ -225,7 +225,7 @@
   const descontoVA = 23.97;
 
   const domingosFeriados = parseInt(document.getElementById("domFeriados").value) || 0;
-  const totalHE = valorHE50 + valorHE60 + valorHE80 + valorHE100;
+  const totalHE = valorHE50 + valorHE60 + valorHE80 + valorHE100 + valorHE150;
   const dsrHE = (totalHE / diasUteis) * domingosFeriados;
   const dsrNoturno = (valorNoturno / diasUteis) * domingosFeriados;
   const bruto = vencBase + totalHE + valorNoturno + dsrHE + dsrNoturno;
