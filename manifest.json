@@ -1,6 +1,6 @@
 {
   "name": "Calculadora de Salário",
-  "short_name": "Salário",
+  "short_name": "Calc. Salário",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
