@@ -1,5 +1,5 @@
 {
-  "name": "Calculadora de Salário",
+  "name": "Salário",
   "short_name": "Calc. Salário",
   "start_url": "./index.html",
   "display": "standalone",
