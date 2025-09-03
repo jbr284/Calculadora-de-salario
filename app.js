@@ -21,7 +21,12 @@ function mostrarFormulario() {
     formView.classList.remove('hidden');
 }
 
+// ---- FUNÇÃO CORRIGIDA ----
 function formatarMoeda(valor) {
+    // Se 'valor' não for um número finito (se for undefined, null, NaN, etc.), trate como 0.
+    if (typeof valor !== 'number' || !isFinite(valor)) {
+        valor = 0;
+    }
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
@@ -32,7 +37,6 @@ function renderizarResultados(resultado) {
     const proventosRows = [];
     const descontosRows = [];
 
-    // --- Constrói linhas de Proventos (apenas se > 0) ---
     if (proventos.vencBase > 0) proventosRows.push(`<tr><td>Salário Base Proporcional</td><td class="valor">${formatarMoeda(proventos.vencBase)}</td></tr>`);
     if (proventos.valorHE50 > 0) proventosRows.push(`<tr><td>Hora Extra 50%</td><td class="valor">${formatarMoeda(proventos.valorHE50)}</td></tr>`);
     if (proventos.valorHE60 > 0) proventosRows.push(`<tr><td>Hora Extra 60%</td><td class="valor">${formatarMoeda(proventos.valorHE60)}</td></tr>`);
@@ -43,7 +47,6 @@ function renderizarResultados(resultado) {
     if (proventos.dsrHE > 0) proventosRows.push(`<tr><td>DSR sobre Horas Extras</td><td class="valor">${formatarMoeda(proventos.dsrHE)}</td></tr>`);
     if (proventos.dsrNoturno > 0) proventosRows.push(`<tr><td>DSR sobre Adicional Noturno</td><td class="valor">${formatarMoeda(proventos.dsrNoturno)}</td></tr>`);
 
-    // --- Constrói linhas de Descontos (apenas se > 0) ---
     if (descontos.descontoFaltas > 0) descontosRows.push(`<tr><td>Faltas (dias)</td><td class="valor">${formatarMoeda(descontos.descontoFaltas)}</td></tr>`);
     if (descontos.descontoAtrasos > 0) descontosRows.push(`<tr><td>Atrasos (horas)</td><td class="valor">${formatarMoeda(descontos.descontoAtrasos)}</td></tr>`);
     if (descontos.adiantamento > 0) descontosRows.push(`<tr><td>Adiantamento Salarial</td><td class="valor">${formatarMoeda(descontos.adiantamento)}</td></tr>`);
@@ -56,7 +59,6 @@ function renderizarResultados(resultado) {
     descontosRows.push(`<tr><td>INSS</td><td class="valor">${formatarMoeda(descontos.inss)}</td></tr>`);
     descontosRows.push(`<tr><td>IRRF</td><td class="valor">${formatarMoeda(descontos.irrf)}</td></tr>`);
 
-    // Monta o HTML final com as classes adicionadas
     resultContainer.innerHTML = `
         <h2>Resultado do Cálculo</h2>
         <table class="result-table">
