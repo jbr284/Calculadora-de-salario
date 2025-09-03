@@ -11,7 +11,7 @@ body {
 }
 
 .container {
-    max-width: 680px;
+    max-width: 1200px; /* Aumentei a largura máxima para acomodar as colunas */
     margin: 20px auto;
     padding: 20px;
     background-color: #fff;
@@ -26,12 +26,29 @@ h1 {
     font-size: 2em;
 }
 
+/* --- NOVOS ESTILOS PARA O LAYOUT DE COLUNAS --- */
+.form-columns-container {
+    display: flex;
+    flex-wrap: wrap; /* Permite que as colunas quebrem em telas menores */
+    gap: 20px; /* Espaço entre as colunas */
+    margin-bottom: 20px;
+}
+
+.form-column {
+    flex: 1; /* Faz com que cada coluna ocupe um espaço igual */
+    min-width: 300px; /* Largura mínima para cada coluna antes de quebrar */
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
 .form-section-title {
     font-size: 1.2em;
     color: #333;
     border-bottom: 2px solid #007acc;
     padding-bottom: 8px;
-    margin-top: 24px;
+    margin-top: 0; /* Remove margem superior desnecessária dentro da coluna */
     margin-bottom: 16px;
 }
 
@@ -127,7 +144,7 @@ button, .btn {
     background-color: #5a6268;
 }
 
-/* --- NOVOS ESTILOS PARA A TABELA DE RESULTADOS --- */
+/* --- ESTILOS DA TABELA DE RESULTADOS (sem alteração) --- */
 #result-view h2 {
     text-align: center;
     color: #007acc;
@@ -140,11 +157,11 @@ button, .btn {
     font-size: 15px;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    overflow: hidden; /* Garante que o border-radius seja aplicado nas bordas da tabela */
+    overflow: hidden; 
 }
 
 .result-table thead {
-    display: none; /* Opcional: podemos remover o cabeçalho fixo */
+    display: none; 
 }
 
 .result-table td {
@@ -153,22 +170,19 @@ button, .btn {
 }
 
 .result-table tbody tr:last-child td {
-    border-bottom: none; /* Remove a borda da última linha */
+    border-bottom: none;
 }
 
-/* Efeito Zebra para melhor legibilidade */
 .result-table tbody tr:nth-of-type(odd) {
     background-color: #f8f9fa;
 }
 
-/* Células com valores alinhados à direita */
 .result-table .valor {
     text-align: right;
     font-weight: 600;
     color: #333;
 }
 
-/* Cabeçalho de cada seção (Proventos, Descontos) */
 .section-header td {
     background-color: #e9ecef;
     color: #495057;
@@ -176,28 +190,25 @@ button, .btn {
     text-align: center;
 }
 
-/* Linhas de totais (Total Bruto, Total Descontos) */
 .summary-row {
-    background-color: #f0f5fa !important; /* Azul bem claro */
+    background-color: #f0f5fa !important; 
     font-weight: bold;
 }
 
 .summary-row .valor {
-    color: #0d47a1; /* Azul escuro */
+    color: #0d47a1; 
 }
 
-/* Destaque principal para o Salário Líquido */
 .final-result-main {
     font-size: 1.2em;
     font-weight: bold;
-    background-color: #e8f5e9 !important; /* Verde bem claro */
+    background-color: #e8f5e9 !important; 
 }
 
 .final-result-main .valor {
-    color: #2e7d32; /* Verde escuro */
+    color: #2e7d32; 
 }
 
-/* Linhas secundárias do resumo final */
 .final-result-secondary {
     font-size: 1.1em;
     background-color: #f1f3f5;
@@ -214,4 +225,11 @@ button, .btn {
 
 .hidden {
     display: none;
+}
+
+/* --- REGRA PARA TELAS MENORES (Responsividade) --- */
+@media (max-width: 900px) {
+    .form-columns-container {
+        flex-direction: column; /* Faz as colunas ficarem uma em cima da outra */
+    }
 }
