@@ -19,104 +19,112 @@
             <input type="hidden" id="domFeriados" />
             <input type="hidden" id="feriadosExtras" />
 
-            <h2 class="form-section-title">Dados Iniciais</h2>
-            <div class="input-group">
-                <label for="salario">Salário Mensal (R$)</label>
-                <input type="number" id="salario" required />
-            </div>
-            <div class="input-group">
-                <label for="diasTrab">Dias Trabalhados</label>
-                <div class="radio-group">
-                    <label><input type="radio" name="tipoDias" value="mensal" /> Mensal (30 dias)</label>
-                    <label><input type="radio" name="tipoDias" value="ferias" /> Mês de férias (informar)</label>
-                </div>
-                <input type="number" id="diasTrab" placeholder="Digite os dias trabalhados" required />
-            </div>
-            <div class="input-group">
-                <label for="dependentes">Dependentes</label>
-                <input type="number" id="dependentes" />
-            </div>
-            <div class="input-group">
-                <label for="mesReferencia">Mês de Referência</label>
-                <input type="month" id="mesReferencia" />
-            </div>
-            <div class="input-group">
-                <label class="form-section-title" style="margin: 0; font-size: 1.1em;">Feriados (Opcional)</label>
-                <div class="feriado-container">
-                    <div class="feriado-actions">
-                        <select id="diaFeriado">
-                            <option value="">Dia</option>
-                            <option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>
-                        </select>
-                        <button type="button" id="btn-add-feriado">Adicionar</button>
-                        <button type="button" id="btn-limpar-feriados" style="background:#c00;">Limpar</button>
+            <div class="form-columns-container">
+                <div class="form-column">
+                    <h2 class="form-section-title">Dados Iniciais</h2>
+                    <div class="input-group">
+                        <label for="salario">Salário Mensal (R$)</label>
+                        <input type="number" id="salario" required />
                     </div>
-                    <div id="listaFeriados" class="lista-feriados"></div>
+                    <div class="input-group">
+                        <label for="diasTrab">Dias Trabalhados</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="tipoDias" value="mensal" /> Mensal (30 dias)</label>
+                            <label><input type="radio" name="tipoDias" value="ferias" /> Mês de férias (informar)</label>
+                        </div>
+                        <input type="number" id="diasTrab" placeholder="Digite os dias trabalhados" required />
+                    </div>
+                    <div class="input-group">
+                        <label for="dependentes">Dependentes</label>
+                        <input type="number" id="dependentes" />
+                    </div>
+                    <div class="input-group">
+                        <label for="mesReferencia">Mês de Referência</label>
+                        <input type="month" id="mesReferencia" />
+                    </div>
+                    <div class="input-group">
+                        <label class="form-section-title" style="margin: 0; font-size: 1.1em;">Feriados (Opcional)</label>
+                        <div class="feriado-container">
+                            <div class="feriado-actions">
+                                <select id="diaFeriado">
+                                    <option value="">Dia</option>
+                                    <option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>
+                                </select>
+                                <button type="button" id="btn-add-feriado">Adicionar</button>
+                                <button type="button" id="btn-limpar-feriados" style="background:#c00;">Limpar</button>
+                            </div>
+                            <div id="listaFeriados" class="lista-feriados"></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <h2 class="form-section-title">Proventos</h2>
-            <div class="input-group">
-                <label for="he50">Horas Extra 50%</label>
-                <input type="number" id="he50" />
-            </div>
-            <div class="input-group">
-                <label for="he60">Horas Extra 60%</label>
-                <input type="number" id="he60" />
-            </div>
-            <div class="input-group">
-                <label for="he80">Horas Extra 80%</label>
-                <input type="number" id="he80" />
-            </div>
-            <div class="input-group">
-                <label for="he100">Horas Extra 100%</label>
-                <input type="number" id="he100" />
-            </div>
-             <div class="input-group">
-                <label for="he150">Horas Extra 150%</label>
-                <input type="number" id="he150" />
-            </div>
-            <div class="input-group">
-                <label for="noturno">Adicional Noturno (horas)</label>
-                <input type="number" id="noturno" />
-            </div>
+                <div class="form-column">
+                    <h2 class="form-section-title">Proventos</h2>
+                    <div class="input-group">
+                        <label for="he50">Horas Extra 50%</label>
+                        <input type="number" id="he50" />
+                    </div>
+                    <div class="input-group">
+                        <label for="he60">Horas Extra 60%</label>
+                        <input type="number" id="he60" />
+                    </div>
+                    <div class="input-group">
+                        <label for="he80">Horas Extra 80%</label>
+                        <input type="number" id="he80" />
+                    </div>
+                    <div class="input-group">
+                        <label for="he100">Horas Extra 100%</label>
+                        <input type="number" id="he100" />
+                    </div>
+                    <div class="input-group">
+                        <label for="he150">Horas Extra 150%</label>
+                        <input type="number" id="he150" />
+                    </div>
+                    <div class="input-group">
+                        <label for="noturno">Adicional Noturno (horas)</label>
+                        <input type="number" id="noturno" />
+                    </div>
+                </div>
 
-            <h2 class="form-section-title">Descontos</h2>
-            <div class="input-group">
-                <label for="faltas">Faltas (dias)</label>
-                <input type="number" id="faltas" />
-            </div>
-            <div class="input-group">
-                <label for="atrasos">Atrasos (horas)</label>
-                <input type="number" id="atrasos" />
-            </div>
-            <div class="input-group">
-                <label for="descontar_vt">Descontar Vale-Transporte (6%)?</label>
-                <select id="descontar_vt">
-                    <option value="nao">Não</option>
-                    <option value="sim">Sim</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label for="plano">Convênio SESI</label>
-                <select id="plano">
-                    <option value="nenhum">Nenhum</option>
-                    <option value="basico_individual">Básico Individual</option>
-                    <option value="basico_familiar">Básico Familiar</option>
-                    <option value="plus_individual">Plus Individual</option>
-                    <option value="plus_familiar">Plus Familiar</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label for="sindicato">Mensalidade Sindical</label>
-                <select id="sindicato">
-                    <option value="nao">Não Associado</option>
-                    <option value="sim">Associado</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label for="emprestimo">Empréstimo Consignado (R$)</label>
-                <input type="number" id="emprestimo" />
+                <div class="form-column">
+                    <h2 class="form-section-title">Descontos</h2>
+                    <div class="input-group">
+                        <label for="faltas">Faltas (dias)</label>
+                        <input type="number" id="faltas" />
+                    </div>
+                    <div class="input-group">
+                        <label for="atrasos">Atrasos (horas)</label>
+                        <input type="number" id="atrasos" />
+                    </div>
+                    <div class="input-group">
+                        <label for="descontar_vt">Descontar Vale-Transporte (6%)?</label>
+                        <select id="descontar_vt">
+                            <option value="nao">Não</option>
+                            <option value="sim">Sim</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="plano">Convênio SESI</label>
+                        <select id="plano">
+                            <option value="nenhum">Nenhum</option>
+                            <option value="basico_individual">Básico Individual</option>
+                            <option value="basico_familiar">Básico Familiar</option>
+                            <option value="plus_individual">Plus Individual</option>
+                            <option value="plus_familiar">Plus Familiar</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="sindicato">Mensalidade Sindical</label>
+                        <select id="sindicato">
+                            <option value="nao">Não Associado</option>
+                            <option value="sim">Associado</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="emprestimo">Empréstimo Consignado (R$)</label>
+                        <input type="number" id="emprestimo" />
+                    </div>
+                </div>
             </div>
         </form>
         <button type="button" id="btn-calcular" class="btn-primary">Calcular</button>
