@@ -9,7 +9,6 @@ function calcularINSS(baseDeCalculo, regras) {
       return (baseDeCalculo * faixa.aliquota) - faixa.deduzir;
     }
   }
-  // Se for maior que a última faixa "até", usa a última regra
   const ultimaFaixa = regras.tabelaINSS[regras.tabelaINSS.length - 1];
   return (baseDeCalculo * ultimaFaixa.aliquota) - ultimaFaixa.deduzir;
 }
@@ -23,11 +22,11 @@ function calcularIRRF(baseDeCalculo, dependentes, regras) {
       return (baseFinal * faixa.aliquota) - faixa.deduzir;
     }
   }
-  return 0; // Caso não se enquadre
+  return 0;
 }
 
 export function calcularSalarioCompleto(inputs, regras) {
-  const { salario, diasTrab, dependentes, faltas, atrasos, he50, he60, he80, he100, he150, noturno, plano, sindicato, emprestimo, diasUteis, domFeriados } = inputs;
+  const { salario, diasTrab, dependentes, faltas, atrasos, he50, he60, he80, he100, he150, noturno, plano, sindicato, emprestimo, diasUteis, domFeriados, descontarVT } = inputs;
 
   const valorDia = salario / 30;
   const valorHora = salario / 220;
@@ -47,22 +46,24 @@ export function calcularSalarioCompleto(inputs, regras) {
 
   const totalBruto = vencBase + totalHE + valorNoturno + dsrHE + dsrNoturno;
 
+  // --- FGTS ---
+  const fgts = totalBruto * 0.08;
+
   // --- Descontos ---
   const descontoFaltas = faltas * valorDia;
   const descontoAtrasos = atrasos * valorHora;
   const adiantamento = (salario / 30) * diasTrab * regras.percentualAdiantamento;
   
-  // Impostos
   const inss = calcularINSS(totalBruto, regras);
   const baseIRRF = totalBruto - inss;
   const irrf = calcularIRRF(baseIRRF, dependentes, regras);
 
-  // Outros Descontos
   const descontoPlano = regras.planosSESI[plano] || 0;
   const descontoSindicato = sindicato === 'sim' ? regras.valorSindicato : 0;
   const descontoVA = regras.descontoFixoVA;
+  const descontoVT = descontarVT ? (salario * regras.percentualVT) : 0;
 
-  const totalDescontos = descontoFaltas + descontoAtrasos + descontoPlano + descontoSindicato + emprestimo + inss + irrf + descontoVA + adiantamento;
+  const totalDescontos = descontoFaltas + descontoAtrasos + descontoPlano + descontoSindicato + emprestimo + inss + irrf + descontoVA + adiantamento + descontoVT;
   
   const liquido = totalBruto - totalDescontos;
 
@@ -71,8 +72,9 @@ export function calcularSalarioCompleto(inputs, regras) {
       vencBase, valorHE50, valorHE60, valorHE80, valorHE100, valorHE150, valorNoturno, dsrHE, dsrNoturno, totalBruto
     },
     descontos: {
-      descontoFaltas, descontoAtrasos, descontoPlano, descontoSindicato, emprestimo, inss, irrf, adiantamento, descontoVA, totalDescontos
+      descontoFaltas, descontoAtrasos, descontoPlano, descontoSindicato, emprestimo, inss, irrf, adiantamento, descontoVA, descontoVT, totalDescontos
     },
+    fgts,
     liquido
   };
 }
