@@ -93,7 +93,7 @@ function renderizarResultados(resultado) {
                     <td class="valor">${formatarMoeda(liquidoMensal)}</td>
                 </tr>
                 <tr class="final-result-secondary fgts-row">
-                    <td>Depósito FGTS do Mês (não descontado)</td>
+                    <td>Depósito FGTS do Mês</td>
                     <td class="valor">${formatarMoeda(fgts)}</td>
                 </tr>
             </tbody>
@@ -255,3 +255,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             .catch(error => console.log('Erro ao registrar Service Worker:', error));
     }
 });
+
