@@ -21,12 +21,7 @@ function mostrarFormulario() {
     formView.classList.remove('hidden');
 }
 
-// ---- FUNÇÃO CORRIGIDA ----
 function formatarMoeda(valor) {
-    // Se 'valor' não for um número finito (se for undefined, null, NaN, etc.), trate como 0.
-    if (typeof valor !== 'number' || !isFinite(valor)) {
-        valor = 0;
-    }
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
@@ -37,6 +32,7 @@ function renderizarResultados(resultado) {
     const proventosRows = [];
     const descontosRows = [];
 
+    // --- Constrói linhas de Proventos (apenas se > 0) ---
     if (proventos.vencBase > 0) proventosRows.push(`<tr><td>Salário Base Proporcional</td><td class="valor">${formatarMoeda(proventos.vencBase)}</td></tr>`);
     if (proventos.valorHE50 > 0) proventosRows.push(`<tr><td>Hora Extra 50%</td><td class="valor">${formatarMoeda(proventos.valorHE50)}</td></tr>`);
     if (proventos.valorHE60 > 0) proventosRows.push(`<tr><td>Hora Extra 60%</td><td class="valor">${formatarMoeda(proventos.valorHE60)}</td></tr>`);
@@ -47,6 +43,7 @@ function renderizarResultados(resultado) {
     if (proventos.dsrHE > 0) proventosRows.push(`<tr><td>DSR sobre Horas Extras</td><td class="valor">${formatarMoeda(proventos.dsrHE)}</td></tr>`);
     if (proventos.dsrNoturno > 0) proventosRows.push(`<tr><td>DSR sobre Adicional Noturno</td><td class="valor">${formatarMoeda(proventos.dsrNoturno)}</td></tr>`);
 
+    // --- Constrói linhas de Descontos (apenas se > 0) ---
     if (descontos.descontoFaltas > 0) descontosRows.push(`<tr><td>Faltas (dias)</td><td class="valor">${formatarMoeda(descontos.descontoFaltas)}</td></tr>`);
     if (descontos.descontoAtrasos > 0) descontosRows.push(`<tr><td>Atrasos (horas)</td><td class="valor">${formatarMoeda(descontos.descontoAtrasos)}</td></tr>`);
     if (descontos.adiantamento > 0) descontosRows.push(`<tr><td>Adiantamento Salarial</td><td class="valor">${formatarMoeda(descontos.adiantamento)}</td></tr>`);
@@ -59,6 +56,7 @@ function renderizarResultados(resultado) {
     descontosRows.push(`<tr><td>INSS</td><td class="valor">${formatarMoeda(descontos.inss)}</td></tr>`);
     descontosRows.push(`<tr><td>IRRF</td><td class="valor">${formatarMoeda(descontos.irrf)}</td></tr>`);
 
+    // Monta o HTML final com as classes adicionadas
     resultContainer.innerHTML = `
         <h2>Resultado do Cálculo</h2>
         <table class="result-table">
@@ -93,7 +91,7 @@ function renderizarResultados(resultado) {
                     <td class="valor">${formatarMoeda(liquidoMensal)}</td>
                 </tr>
                 <tr class="final-result-secondary fgts-row">
-                    <td>Depósito FGTS do Mês</td>
+                    <td>Depósito FGTS do Mês (não descontado)</td>
                     <td class="valor">${formatarMoeda(fgts)}</td>
                 </tr>
             </tbody>
@@ -246,6 +244,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    // --- NOVA FUNCIONALIDADE: Conversor Automático de Horas ---
+    const camposDeHora = document.querySelectorAll('.hora-conversivel');
+
+    function converterInputParaDecimal() {
+        // Pega o valor, substitui 'h' por ':' e ',' por '.'
+        let valor = this.value.replace('h', ':').replace(',', '.').trim();
+        
+        if (valor.includes(':')) {
+            // Se tem ':', divide em horas e minutos
+            const partes = valor.split(':');
+            const horas = parseFloat(partes[0]) || 0;
+            const minutos = parseFloat(partes[1]) || 0;
+            
+            // Validação simples de minutos
+            if(minutos < 0 || minutos > 59) {
+                 this.value = horas.toFixed(2); // Usa só as horas
+                 return;
+            }
+            // Calcula o decimal e atualiza o campo
+            this.value = (horas + (minutos / 60)).toFixed(2);
+        } else if (valor) {
+            // Se é apenas um número (ex: 5.5 ou 5), formata para 2 casas
+            const valorDecimal = parseFloat(valor) || 0;
+            this.value = valorDecimal.toFixed(2);
+        } else {
+            // Se o campo for limpo, deixa vazio (não "0.00")
+            this.value = '';
+        }
+    }
+
+    // Adiciona o "ouvinte" de evento 'blur' (ao sair do campo)
+    camposDeHora.forEach(campo => {
+        campo.addEventListener('blur', converterInputParaDecimal);
+    });
+    // --- FIM DA NOVA FUNCIONALIDADE ---
+
     restaurarDadosFixos();
     preencherDiasMes();
     
@@ -255,4 +289,3 @@ document.addEventListener('DOMContentLoaded', async () => {
             .catch(error => console.log('Erro ao registrar Service Worker:', error));
     }
 });
-
