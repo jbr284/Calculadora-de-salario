@@ -9,6 +9,13 @@ const resultView = document.getElementById('result-view');
 const resultContainer = document.getElementById('resultado-container');
 const mesReferenciaInput = document.getElementById('mesReferencia');
 
+// Novos Seletores para Lógica de Férias
+const boxCalculoFerias = document.getElementById('box-calculo-ferias');
+const diasTrabInput = document.getElementById('diasTrab');
+const inicioFeriasInput = document.getElementById('inicioFerias');
+const qtdDiasFeriasInput = document.getElementById('qtdDiasFerias');
+const feedbackFerias = document.getElementById('feedback-ferias');
+
 // --- Funções de UI ---
 function mostrarResultados() {
     formView.classList.add('hidden');
@@ -32,7 +39,6 @@ function renderizarResultados(resultado) {
     const proventosRows = [];
     const descontosRows = [];
 
-    // --- Constrói linhas de Proventos (apenas se > 0) ---
     if (proventos.vencBase > 0) proventosRows.push(`<tr><td>Salário Base Proporcional</td><td class="valor">${formatarMoeda(proventos.vencBase)}</td></tr>`);
     if (proventos.valorHE50 > 0) proventosRows.push(`<tr><td>Hora Extra 50%</td><td class="valor">${formatarMoeda(proventos.valorHE50)}</td></tr>`);
     if (proventos.valorHE60 > 0) proventosRows.push(`<tr><td>Hora Extra 60%</td><td class="valor">${formatarMoeda(proventos.valorHE60)}</td></tr>`);
@@ -43,7 +49,6 @@ function renderizarResultados(resultado) {
     if (proventos.dsrHE > 0) proventosRows.push(`<tr><td>DSR sobre Horas Extras</td><td class="valor">${formatarMoeda(proventos.dsrHE)}</td></tr>`);
     if (proventos.dsrNoturno > 0) proventosRows.push(`<tr><td>DSR sobre Adicional Noturno</td><td class="valor">${formatarMoeda(proventos.dsrNoturno)}</td></tr>`);
 
-    // --- Constrói linhas de Descontos (apenas se > 0) ---
     if (descontos.descontoFaltas > 0) descontosRows.push(`<tr><td>Faltas (dias)</td><td class="valor">${formatarMoeda(descontos.descontoFaltas)}</td></tr>`);
     if (descontos.descontoAtrasos > 0) descontosRows.push(`<tr><td>Atrasos (horas)</td><td class="valor">${formatarMoeda(descontos.descontoAtrasos)}</td></tr>`);
     if (descontos.adiantamento > 0) descontosRows.push(`<tr><td>Adiantamento Salarial</td><td class="valor">${formatarMoeda(descontos.adiantamento)}</td></tr>`);
@@ -56,7 +61,6 @@ function renderizarResultados(resultado) {
     descontosRows.push(`<tr><td>INSS</td><td class="valor">${formatarMoeda(descontos.inss)}</td></tr>`);
     descontosRows.push(`<tr><td>IRRF</td><td class="valor">${formatarMoeda(descontos.irrf)}</td></tr>`);
 
-    // Monta o HTML final com as classes adicionadas
     resultContainer.innerHTML = `
         <h2>Resultado do Cálculo</h2>
         <table class="result-table">
@@ -101,10 +105,103 @@ function renderizarResultados(resultado) {
 }
 
 
+// --- LÓGICA DE FÉRIAS CORRIGIDA (3 MODOS) ---
+function alternarModoDias() {
+    const modo = document.querySelector('input[name="tipoDias"]:checked').value;
+    
+    // Reset visual
+    diasTrabInput.style.backgroundColor = "#e8f0fe"; // Azul claro para indicar automático
+    diasTrabInput.readOnly = true;
+
+    if (modo === 'completo') {
+        // MODO 1: Mês completo
+        boxCalculoFerias.classList.add('hidden');
+        diasTrabInput.value = 30;
+        diasTrabInput.style.backgroundColor = "#f0f0f0";
+        feedbackFerias.textContent = "";
+    } else {
+        // MODO 2 (Saída) e MODO 3 (Retorno)
+        // Ambos precisam que o usuário informe os dados das férias para calcular a interseção
+        boxCalculoFerias.classList.remove('hidden');
+        
+        // Limpa se for a primeira vez que abre, ou recalcula se já tiver dados
+        if(!inicioFeriasInput.value || !qtdDiasFeriasInput.value) {
+            diasTrabInput.value = "";
+            feedbackFerias.textContent = "";
+        } else {
+            calcularDiasProporcionaisFerias();
+        }
+    }
+}
+
+function calcularDiasProporcionaisFerias() {
+    // 1. Obter dados
+    const mesRefStr = mesReferenciaInput.value; // YYYY-MM
+    const inicioFeriasStr = inicioFeriasInput.value; // YYYY-MM-DD
+    const diasFerias = parseInt(qtdDiasFeriasInput.value);
+    const modo = document.querySelector('input[name="tipoDias"]:checked').value;
+
+    // Validação básica
+    if (!mesRefStr || !inicioFeriasStr || !diasFerias) {
+        diasTrabInput.value = "";
+        feedbackFerias.innerHTML = "<span style='color: #d32f2f'>Preencha o Mês de Referência e os dados das férias.</span>";
+        return;
+    }
+
+    // 2. Definir o intervalo do Mês de Referência
+    const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
+    const inicioMesRef = new Date(anoRef, mesRef - 1, 1);
+    const fimMesRef = new Date(anoRef, mesRef, 0); 
+
+    // 3. Definir o intervalo das Férias (Calculado a partir do início e duração)
+    const dataInicioFerias = new Date(inicioFeriasStr);
+    const dataFimFerias = new Date(dataInicioFerias);
+    dataFimFerias.setDate(dataFimFerias.getDate() + diasFerias - 1);
+
+    // 4. Calcular Interseção (Quantos dias dessas férias caem NO MÊS SELECIONADO?)
+    const inicioIntersecao = new Date(Math.max(inicioMesRef, dataInicioFerias));
+    const fimIntersecao = new Date(Math.min(fimMesRef, dataFimFerias));
+
+    let diasDeFeriasNoMes = 0;
+
+    // Se houver interseção válida
+    if (inicioIntersecao <= fimIntersecao) {
+        const diffTempo = fimIntersecao - inicioIntersecao;
+        diasDeFeriasNoMes = Math.ceil(diffTempo / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    // 5. Calcular dias a trabalhar (Base 30 comercial)
+    let diasTrabalhados = 30 - diasDeFeriasNoMes;
+
+    // Ajustes de segurança
+    if (diasTrabalhados < 0) diasTrabalhados = 0;
+    if (diasTrabalhados > 30) diasTrabalhados = 30;
+
+    // 6. Atualizar Interface e Texto de Feedback específico para cada modo
+    diasTrabInput.value = diasTrabalhados;
+    
+    const fmt = date => date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+    
+    // Mensagem inteligente baseada no modo
+    if (modo === 'saida_ferias') {
+        feedbackFerias.innerHTML = `
+            Saída em: <b>${fmt(dataInicioFerias)}</b>.<br>
+            Dias de férias neste mês: <b>${diasDeFeriasNoMes}</b>.<br>
+            Trabalhou até a saída: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
+        `;
+    } else if (modo === 'retorno_ferias') {
+        feedbackFerias.innerHTML = `
+            Retorno em: <b>${fmt(dataFimFerias)}</b> (Fim das férias).<br>
+            Dias de férias neste mês: <b>${diasDeFeriasNoMes}</b>.<br>
+            Trabalhou após o retorno: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
+        `;
+    }
+}
+
 // --- Lógica Principal de Cálculo ---
 function handleCalcular() {
     if (!regrasCalculo) {
-        alert('As regras de cálculo ainda não foram carregadas. Tente novamente em um instante.');
+        alert('As regras de cálculo ainda não foram carregadas.');
         return;
     }
     const inputs = {
@@ -193,6 +290,12 @@ function preencherDiasMes() {
     const qtdFeriados = feriadosExtras ? feriadosExtras.split(',').length : 0;
     document.getElementById('diasUteis').value = diasUteis - qtdFeriados - feriadosNacionaisNoMes;
     document.getElementById('domFeriados').value = domingos + qtdFeriados + feriadosNacionaisNoMes;
+    
+    // Se estiver em modo de férias (saída ou retorno), recalcula
+    const modo = document.querySelector('input[name="tipoDias"]:checked')?.value;
+    if(modo === 'saida_ferias' || modo === 'retorno_ferias') {
+        calcularDiasProporcionaisFerias();
+    }
 }
 
 function salvarDadosFixos() {
@@ -222,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         regrasCalculo = await fetch('regras.json').then(res => res.json());
     } catch (error) {
         console.error('Falha ao carregar as regras de cálculo:', error);
-        alert('Não foi possível carregar as configurações da calculadora. Verifique sua conexão.');
+        alert('Erro ao carregar configurações. Verifique a conexão.');
     }
 
     document.getElementById('btn-calcular').addEventListener('click', handleCalcular);
@@ -232,55 +335,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-limpar-feriados').addEventListener('click', limparFeriados);
     mesReferenciaInput.addEventListener('change', preencherDiasMes);
     
+    // Listeners para a nova lógica de 3 modos
     document.querySelectorAll('input[name="tipoDias"]').forEach(radio => {
-        radio.addEventListener('click', (e) => {
-            const diasTrabInput = document.getElementById('diasTrab');
-            if(e.target.value === 'mensal') {
-                diasTrabInput.value = 30;
-            } else {
-                diasTrabInput.value = '';
-                diasTrabInput.focus();
-            }
-        });
+        radio.addEventListener('change', alternarModoDias);
     });
-
-    // --- NOVA FUNCIONALIDADE: Conversor Automático de Horas ---
+    inicioFeriasInput.addEventListener('change', calcularDiasProporcionaisFerias);
+    qtdDiasFeriasInput.addEventListener('input', calcularDiasProporcionaisFerias);
+    
+    // Conversor Automático de Horas
     const camposDeHora = document.querySelectorAll('.hora-conversivel');
-
     function converterInputParaDecimal() {
-        // Pega o valor, substitui 'h' por ':' e ',' por '.'
         let valor = this.value.replace('h', ':').replace(',', '.').trim();
-        
         if (valor.includes(':')) {
-            // Se tem ':', divide em horas e minutos
             const partes = valor.split(':');
             const horas = parseFloat(partes[0]) || 0;
             const minutos = parseFloat(partes[1]) || 0;
-            
-            // Validação simples de minutos
             if(minutos < 0 || minutos > 59) {
-                 this.value = horas.toFixed(2); // Usa só as horas
+                 this.value = horas.toFixed(2);
                  return;
             }
-            // Calcula o decimal e atualiza o campo
             this.value = (horas + (minutos / 60)).toFixed(2);
         } else if (valor) {
-            // Se é apenas um número (ex: 5.5 ou 5), formata para 2 casas
             const valorDecimal = parseFloat(valor) || 0;
             this.value = valorDecimal.toFixed(2);
         } else {
-            // Se o campo for limpo, deixa vazio (não "0.00")
             this.value = '';
         }
     }
-
-    // Adiciona o "ouvinte" de evento 'blur' (ao sair do campo)
     camposDeHora.forEach(campo => {
         campo.addEventListener('blur', converterInputParaDecimal);
     });
-    // --- FIM DA NOVA FUNCIONALIDADE ---
 
     restaurarDadosFixos();
+    // Inicia no modo correto (Mensal padrão)
+    alternarModoDias();
     preencherDiasMes();
     
     if ('serviceWorker' in navigator) {
