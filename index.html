@@ -22,26 +22,48 @@
             <div class="form-columns-container">
                 <div class="form-column">
                     <h2 class="form-section-title">Dados Iniciais</h2>
+                    
+                    <div class="input-group">
+                        <label for="mesReferencia">Mês de Referência (Obrigatório)</label>
+                        <input type="month" id="mesReferencia" required />
+                    </div>
+
                     <div class="input-group">
                         <label for="salario">Salário Mensal (R$)</label>
                         <input type="number" id="salario" required />
                     </div>
+                    
                     <div class="input-group">
-                        <label for="diasTrab">Dias Trabalhados</label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="tipoDias" value="mensal" /> Mensal (30 dias)</label>
-                            <label><input type="radio" name="tipoDias" value="ferias" /> Mês de férias (informar)</label>
+                        <label>Situação do Funcionário no Mês</label>
+                        <div class="radio-group" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <label><input type="radio" name="tipoDias" value="completo" checked /> 1. Mês Completo (30 Dias)</label>
+                            <label><input type="radio" name="tipoDias" value="saida_ferias" /> 2. Mês de Saída de Férias</label>
+                            <label><input type="radio" name="tipoDias" value="retorno_ferias" /> 3. Mês de Retorno de Férias</label>
                         </div>
-                        <input type="number" id="diasTrab" placeholder="Digite os dias trabalhados" required />
+                        
+                        <div id="box-calculo-ferias" class="feriado-container hidden" style="margin-top: 10px; background-color: #e3f2fd; border-color: #90caf9;">
+                            <label style="font-size: 0.9em; color: #0d47a1; margin-bottom: 5px; display:block; font-weight:bold;">Dados do Recibo de Férias:</label>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 120px;">
+                                    <label for="inicioFerias" style="font-size: 0.8em;">Data de Início das Férias</label>
+                                    <input type="date" id="inicioFerias" style="width: 100%; padding: 8px;">
+                                </div>
+                                <div style="flex: 1; min-width: 80px;">
+                                    <label for="qtdDiasFerias" style="font-size: 0.8em;">Qtd. Dias de Gozo</label>
+                                    <input type="number" id="qtdDiasFerias" placeholder="Ex: 30" style="width: 100%; padding: 8px;">
+                                </div>
+                            </div>
+                            <p id="feedback-ferias" style="font-size: 0.85em; color: #555; margin-top: 8px; font-style: italic; line-height: 1.4; border-top: 1px solid #bbdefb; padding-top: 5px;"></p>
+                        </div>
+                    
+                        <label for="diasTrab" style="margin-top: 10px; display: block;">Dias de Salário a Pagar</label>
+                        <input type="number" id="diasTrab" required readonly style="background-color: #f0f0f0; font-weight: bold; color: #0d47a1;" />
                     </div>
                     <div class="input-group">
                         <label for="dependentes">Dependentes</label>
                         <input type="number" id="dependentes" />
                     </div>
-                    <div class="input-group">
-                        <label for="mesReferencia">Mês de Referência</label>
-                        <input type="month" id="mesReferencia" />
-                    </div>
+                    
                     <div class="input-group">
                         <label class="form-section-title" style="margin: 0; font-size: 1.1em;">Feriados (Opcional)</label>
                         <div class="feriado-container">
