@@ -1,22 +1,113 @@
-// app.js
-import { calcularSalarioCompleto } from './calculadora-regras.js';
+// app.js - VERSÃO COMPLETA E ATUALIZADA
 
-let regrasCalculo;
+// --- 1. DADOS E REGRAS ---
+const regrasCalculo = {
+  "anoVigencia": 2025,
+  "salarioMinimo": 1518.00,
+  "tetoINSS": 8157.41,
+  "percentualAdiantamento": 0.4,
+  "percentualAdicionalNoturno": 0.35,
+  "descontoFixoVA": 23.97,
+  "percentualVT": 0.06,
+  "valorSindicato": 47.5,
+  "deducaoPorDependenteIRRF": 189.59,
+  "tabelaINSS": [
+    { "ate": 1518.00, "aliquota": 0.075, "deduzir": 0 },
+    { "ate": 2793.88, "aliquota": 0.09, "deduzir": 22.77 },
+    { "ate": 4190.83, "aliquota": 0.12, "deduzir": 106.59 },
+    { "ate": 8157.41, "aliquota": 0.14, "deduzir": 190.41 }
+  ],
+  "tabelaIRRF": [
+    { "ate": 2428.80, "aliquota": 0, "deduzir": 0 },
+    { "ate": 2826.65, "aliquota": 0.075, "deduzir": 182.16 },
+    { "ate": 3751.05, "aliquota": 0.15, "deduzir": 394.16 },
+    { "ate": 4664.68, "aliquota": 0.225, "deduzir": 675.49 },
+    { "ate": "acima", "aliquota": 0.275, "deduzir": 908.73 }
+  ],
+  "planosSESI": {
+    "nenhum": 0,
+    "basico_individual": 29,
+    "basico_familiar": 58,
+    "plus_individual": 115,
+    "plus_familiar": 180
+  }
+};
 
-// --- Seletores de Elementos do DOM ---
+// --- 2. LÓGICA MATEMÁTICA ---
+function calcularINSS(baseDeCalculo, regras) {
+  if (baseDeCalculo > regras.tetoINSS) baseDeCalculo = regras.tetoINSS;
+  for (const faixa of regras.tabelaINSS) {
+    if (baseDeCalculo <= faixa.ate) return (baseDeCalculo * faixa.aliquota) - faixa.deduzir;
+  }
+  const ultima = regras.tabelaINSS[regras.tabelaINSS.length - 1];
+  return (baseDeCalculo * ultima.aliquota) - ultima.deduzir;
+}
+
+function calcularIRRF(baseDeCalculo, dependentes, regras) {
+  const deducao = dependentes * regras.deducaoPorDependenteIRRF;
+  const baseFinal = baseDeCalculo - deducao;
+  for (const faixa of regras.tabelaIRRF) {
+    if (faixa.ate === "acima" || baseFinal <= faixa.ate) return (baseFinal * faixa.aliquota) - faixa.deduzir;
+  }
+  return 0;
+}
+
+function calcularSalarioCompleto(inputs, regras) {
+  const { salario, diasTrab, dependentes, faltas, atrasos, he50, he60, he80, he100, he150, noturno, plano, sindicato, emprestimo, diasUteis, domFeriados, descontarVT } = inputs;
+
+  const valorDia = salario / 30;
+  const valorHora = salario / 220;
+
+  // Proventos
+  const vencBase = valorDia * diasTrab;
+  const valorHE50 = he50 * valorHora * 1.5;
+  const valorHE60 = he60 * valorHora * 1.6;
+  const valorHE80 = he80 * valorHora * 1.8;
+  const valorHE100 = he100 * valorHora * 2.0;
+  const valorHE150 = he150 * valorHora * 2.5;
+  const valorNoturno = noturno * valorHora * regras.percentualAdicionalNoturno;
+  
+  const totalHE = valorHE50 + valorHE60 + valorHE80 + valorHE100 + valorHE150;
+  const dsrHE = (diasUteis > 0) ? (totalHE / diasUteis) * domFeriados : 0;
+  const dsrNoturno = (diasUteis > 0) ? (valorNoturno / diasUteis) * domFeriados : 0;
+  const totalBruto = vencBase + totalHE + valorNoturno + dsrHE + dsrNoturno;
+
+  // Descontos
+  const fgts = totalBruto * 0.08;
+  const descontoFaltas = faltas * valorDia;
+  const descontoAtrasos = atrasos * valorHora;
+  const adiantamento = (salario / 30) * diasTrab * regras.percentualAdiantamento;
+  const inss = calcularINSS(totalBruto, regras);
+  const baseIRRF = totalBruto - inss;
+  const irrf = calcularIRRF(baseIRRF, dependentes, regras);
+  const descontoPlano = regras.planosSESI[plano] || 0;
+  const descontoSindicato = sindicato === 'sim' ? regras.valorSindicato : 0;
+  const descontoVA = regras.descontoFixoVA;
+  const descontoVT = descontarVT ? (salario * regras.percentualVT) : 0;
+
+  const totalDescontos = descontoFaltas + descontoAtrasos + descontoPlano + descontoSindicato + emprestimo + inss + irrf + descontoVA + adiantamento + descontoVT;
+  const liquido = totalBruto - totalDescontos;
+
+  return {
+    proventos: { vencBase, valorHE50, valorHE60, valorHE80, valorHE100, valorHE150, valorNoturno, dsrHE, dsrNoturno, totalBruto },
+    descontos: { descontoFaltas, descontoAtrasos, descontoPlano, descontoSindicato, emprestimo, inss, irrf, adiantamento, descontoVA, descontoVT, totalDescontos },
+    fgts, liquido
+  };
+}
+
+// --- 3. INTERFACE E EVENTOS ---
 const formView = document.getElementById('form-view');
 const resultView = document.getElementById('result-view');
 const resultContainer = document.getElementById('resultado-container');
 const mesReferenciaInput = document.getElementById('mesReferencia');
 
-// Novos Seletores para Lógica de Férias
+// Seletores de Férias
 const boxCalculoFerias = document.getElementById('box-calculo-ferias');
 const diasTrabInput = document.getElementById('diasTrab');
 const inicioFeriasInput = document.getElementById('inicioFerias');
 const qtdDiasFeriasInput = document.getElementById('qtdDiasFerias');
 const feedbackFerias = document.getElementById('feedback-ferias');
 
-// --- Funções de UI ---
 function mostrarResultados() {
     formView.classList.add('hidden');
     resultView.classList.remove('hidden');
@@ -35,99 +126,78 @@ function formatarMoeda(valor) {
 function renderizarResultados(resultado) {
     const { proventos, descontos, liquido, fgts } = resultado;
     const liquidoMensal = liquido + descontos.adiantamento;
-
-    const proventosRows = [];
-    const descontosRows = [];
-
-    if (proventos.vencBase > 0) proventosRows.push(`<tr><td>Salário Base Proporcional</td><td class="valor">${formatarMoeda(proventos.vencBase)}</td></tr>`);
-    if (proventos.valorHE50 > 0) proventosRows.push(`<tr><td>Hora Extra 50%</td><td class="valor">${formatarMoeda(proventos.valorHE50)}</td></tr>`);
-    if (proventos.valorHE60 > 0) proventosRows.push(`<tr><td>Hora Extra 60%</td><td class="valor">${formatarMoeda(proventos.valorHE60)}</td></tr>`);
-    if (proventos.valorHE80 > 0) proventosRows.push(`<tr><td>Hora Extra 80%</td><td class="valor">${formatarMoeda(proventos.valorHE80)}</td></tr>`);
-    if (proventos.valorHE100 > 0) proventosRows.push(`<tr><td>Hora Extra 100%</td><td class="valor">${formatarMoeda(proventos.valorHE100)}</td></tr>`);
-    if (proventos.valorHE150 > 0) proventosRows.push(`<tr><td>Hora Extra 150%</td><td class="valor">${formatarMoeda(proventos.valorHE150)}</td></tr>`);
-    if (proventos.valorNoturno > 0) proventosRows.push(`<tr><td>Adicional Noturno</td><td class="valor">${formatarMoeda(proventos.valorNoturno)}</td></tr>`);
-    if (proventos.dsrHE > 0) proventosRows.push(`<tr><td>DSR sobre Horas Extras</td><td class="valor">${formatarMoeda(proventos.dsrHE)}</td></tr>`);
-    if (proventos.dsrNoturno > 0) proventosRows.push(`<tr><td>DSR sobre Adicional Noturno</td><td class="valor">${formatarMoeda(proventos.dsrNoturno)}</td></tr>`);
-
-    if (descontos.descontoFaltas > 0) descontosRows.push(`<tr><td>Faltas (dias)</td><td class="valor">${formatarMoeda(descontos.descontoFaltas)}</td></tr>`);
-    if (descontos.descontoAtrasos > 0) descontosRows.push(`<tr><td>Atrasos (horas)</td><td class="valor">${formatarMoeda(descontos.descontoAtrasos)}</td></tr>`);
-    if (descontos.adiantamento > 0) descontosRows.push(`<tr><td>Adiantamento Salarial</td><td class="valor">${formatarMoeda(descontos.adiantamento)}</td></tr>`);
-    if (descontos.descontoPlano > 0) descontosRows.push(`<tr><td>Convênio SESI</td><td class="valor">${formatarMoeda(descontos.descontoPlano)}</td></tr>`);
-    if (descontos.descontoSindicato > 0) descontosRows.push(`<tr><td>Sindicato</td><td class="valor">${formatarMoeda(descontos.descontoSindicato)}</td></tr>`);
-    if (descontos.emprestimo > 0) descontosRows.push(`<tr><td>Empréstimo</td><td class="valor">${formatarMoeda(descontos.emprestimo)}</td></tr>`);
-    if (descontos.descontoVA > 0) descontosRows.push(`<tr><td>Vale Alimentação</td><td class="valor">${formatarMoeda(descontos.descontoVA)}</td></tr>`);
-    if (descontos.descontoVT > 0) descontosRows.push(`<tr><td>Vale Transporte (6%)</td><td class="valor">${formatarMoeda(descontos.descontoVT)}</td></tr>`);
     
-    descontosRows.push(`<tr><td>INSS</td><td class="valor">${formatarMoeda(descontos.inss)}</td></tr>`);
-    descontosRows.push(`<tr><td>IRRF</td><td class="valor">${formatarMoeda(descontos.irrf)}</td></tr>`);
+    // Helper para criar linhas da tabela
+    const row = (label, val) => val > 0 ? `<tr><td>${label}</td><td class="valor">${formatarMoeda(val)}</td></tr>` : '';
+
+    let htmlProventos = '';
+    htmlProventos += row('Salário Base Proporcional', proventos.vencBase);
+    htmlProventos += row('Hora Extra 50%', proventos.valorHE50);
+    htmlProventos += row('Hora Extra 60%', proventos.valorHE60);
+    htmlProventos += row('Hora Extra 80%', proventos.valorHE80);
+    htmlProventos += row('Hora Extra 100%', proventos.valorHE100);
+    htmlProventos += row('Hora Extra 150%', proventos.valorHE150);
+    htmlProventos += row('Adicional Noturno', proventos.valorNoturno);
+    htmlProventos += row('DSR sobre Horas Extras', proventos.dsrHE);
+    htmlProventos += row('DSR sobre Adicional Noturno', proventos.dsrNoturno);
+
+    let htmlDescontos = '';
+    htmlDescontos += row('Faltas (dias)', descontos.descontoFaltas);
+    htmlDescontos += row('Atrasos (horas)', descontos.descontoAtrasos);
+    htmlDescontos += row('Adiantamento Salarial', descontos.adiantamento);
+    htmlDescontos += row('Convênio SESI', descontos.descontoPlano);
+    htmlDescontos += row('Sindicato', descontos.descontoSindicato);
+    htmlDescontos += row('Empréstimo', descontos.emprestimo);
+    htmlDescontos += row('Vale Alimentação', descontos.descontoVA);
+    htmlDescontos += row('Vale Transporte (6%)', descontos.descontoVT);
+    htmlDescontos += `<tr><td>INSS</td><td class="valor">${formatarMoeda(descontos.inss)}</td></tr>`;
+    htmlDescontos += `<tr><td>IRRF</td><td class="valor">${formatarMoeda(descontos.irrf)}</td></tr>`;
 
     resultContainer.innerHTML = `
         <h2>Resultado do Cálculo</h2>
         <table class="result-table">
-            <thead>
-                <tr>
-                    <th>Descrição</th>
-                    <th>Valor</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Descrição</th><th>Valor</th></tr></thead>
             <tbody>
                 <tr class="section-header"><td colspan="2">Proventos</td></tr>
-                ${proventosRows.join('')}
-                <tr class="summary-row">
-                    <td>Total Bruto</td>
-                    <td class="valor">${formatarMoeda(proventos.totalBruto)}</td>
-                </tr>
-
+                ${htmlProventos}
+                <tr class="summary-row"><td>Total Bruto</td><td class="valor">${formatarMoeda(proventos.totalBruto)}</td></tr>
                 <tr class="section-header"><td colspan="2">Descontos</td></tr>
-                ${descontosRows.join('')}
-                <tr class="summary-row">
-                    <td>Total de Descontos</td>
-                    <td class="valor">${formatarMoeda(descontos.totalDescontos)}</td>
-                </tr>
-                
+                ${htmlDescontos}
+                <tr class="summary-row"><td>Total de Descontos</td><td class="valor">${formatarMoeda(descontos.totalDescontos)}</td></tr>
                 <tr class="section-header"><td colspan="2">Resumo Final</td></tr>
-                <tr class="final-result-main">
-                    <td>Salário Líquido (Pagamento Final)</td>
-                    <td class="valor">${formatarMoeda(liquido)}</td>
-                </tr>
-                <tr class="final-result-secondary">
-                    <td>Salário Líquido Total (mês)</td>
-                    <td class="valor">${formatarMoeda(liquidoMensal)}</td>
-                </tr>
-                <tr class="final-result-secondary fgts-row">
-                    <td>Depósito FGTS do Mês (não descontado)</td>
-                    <td class="valor">${formatarMoeda(fgts)}</td>
-                </tr>
+                <tr class="final-result-main"><td>Salário Líquido (Pagamento Final)</td><td class="valor">${formatarMoeda(liquido)}</td></tr>
+                <tr class="final-result-secondary"><td>Salário Líquido Total (mês)</td><td class="valor">${formatarMoeda(liquidoMensal)}</td></tr>
+                <tr class="final-result-secondary fgts-row"><td>Depósito FGTS do Mês</td><td class="valor">${formatarMoeda(fgts)}</td></tr>
             </tbody>
         </table>
     `;
     mostrarResultados();
 }
 
-
-// --- LÓGICA DE FÉRIAS CORRIGIDA (3 MODOS) ---
+// --- LÓGICA DE FÉRIAS (3 MODOS) ---
 function alternarModoDias() {
-    const modo = document.querySelector('input[name="tipoDias"]:checked').value;
+    const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
+    if(!opcaoSelecionada) return;
+
+    const modo = opcaoSelecionada.value;
     
-    // Reset visual
-    diasTrabInput.style.backgroundColor = "#e8f0fe"; // Azul claro para indicar automático
+    // Configuração Visual do campo Dias
+    diasTrabInput.style.backgroundColor = "#e8f0fe"; 
     diasTrabInput.readOnly = true;
 
     if (modo === 'completo') {
-        // MODO 1: Mês completo
         boxCalculoFerias.classList.add('hidden');
         diasTrabInput.value = 30;
         diasTrabInput.style.backgroundColor = "#f0f0f0";
         feedbackFerias.textContent = "";
     } else {
-        // MODO 2 (Saída) e MODO 3 (Retorno)
-        // Ambos precisam que o usuário informe os dados das férias para calcular a interseção
+        // Modo Saída ou Retorno: Mostra a caixa
         boxCalculoFerias.classList.remove('hidden');
         
-        // Limpa se for a primeira vez que abre, ou recalcula se já tiver dados
+        // Verifica se já tem dados para calcular
         if(!inicioFeriasInput.value || !qtdDiasFeriasInput.value) {
             diasTrabInput.value = "";
-            feedbackFerias.textContent = "";
+            feedbackFerias.innerHTML = "Aguardando dados das férias...";
         } else {
             calcularDiasProporcionaisFerias();
         }
@@ -135,75 +205,58 @@ function alternarModoDias() {
 }
 
 function calcularDiasProporcionaisFerias() {
-    // 1. Obter dados
-    const mesRefStr = mesReferenciaInput.value; // YYYY-MM
-    const inicioFeriasStr = inicioFeriasInput.value; // YYYY-MM-DD
+    // 1. Obter Valores
+    const mesRefStr = mesReferenciaInput.value; 
+    const inicioFeriasStr = inicioFeriasInput.value; 
     const diasFerias = parseInt(qtdDiasFeriasInput.value);
-    const modo = document.querySelector('input[name="tipoDias"]:checked').value;
+    const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
 
-    // Validação básica
-    if (!mesRefStr || !inicioFeriasStr || !diasFerias) {
+    // Validação
+    if (!mesRefStr || !inicioFeriasStr || !diasFerias || !opcaoSelecionada) {
         diasTrabInput.value = "";
-        feedbackFerias.innerHTML = "<span style='color: #d32f2f'>Preencha o Mês de Referência e os dados das férias.</span>";
         return;
     }
 
-    // 2. Definir o intervalo do Mês de Referência
+    // 2. Intervalo do Mês de Referência
     const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
     const inicioMesRef = new Date(anoRef, mesRef - 1, 1);
     const fimMesRef = new Date(anoRef, mesRef, 0); 
 
-    // 3. Definir o intervalo das Férias (Calculado a partir do início e duração)
+    // 3. Intervalo das Férias
     const dataInicioFerias = new Date(inicioFeriasStr);
     const dataFimFerias = new Date(dataInicioFerias);
     dataFimFerias.setDate(dataFimFerias.getDate() + diasFerias - 1);
 
-    // 4. Calcular Interseção (Quantos dias dessas férias caem NO MÊS SELECIONADO?)
+    // 4. Interseção (Dias de férias dentro do mês)
     const inicioIntersecao = new Date(Math.max(inicioMesRef, dataInicioFerias));
     const fimIntersecao = new Date(Math.min(fimMesRef, dataFimFerias));
 
     let diasDeFeriasNoMes = 0;
-
-    // Se houver interseção válida
     if (inicioIntersecao <= fimIntersecao) {
         const diffTempo = fimIntersecao - inicioIntersecao;
         diasDeFeriasNoMes = Math.ceil(diffTempo / (1000 * 60 * 60 * 24)) + 1;
     }
 
-    // 5. Calcular dias a trabalhar (Base 30 comercial)
+    // 5. Saldo de Salário
     let diasTrabalhados = 30 - diasDeFeriasNoMes;
-
-    // Ajustes de segurança
     if (diasTrabalhados < 0) diasTrabalhados = 0;
     if (diasTrabalhados > 30) diasTrabalhados = 30;
 
-    // 6. Atualizar Interface e Texto de Feedback específico para cada modo
     diasTrabInput.value = diasTrabalhados;
     
+    // 6. Feedback Visual
     const fmt = date => date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+    const modo = opcaoSelecionada.value;
     
-    // Mensagem inteligente baseada no modo
     if (modo === 'saida_ferias') {
-        feedbackFerias.innerHTML = `
-            Saída em: <b>${fmt(dataInicioFerias)}</b>.<br>
-            Dias de férias neste mês: <b>${diasDeFeriasNoMes}</b>.<br>
-            Trabalhou até a saída: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
-        `;
+        feedbackFerias.innerHTML = `Saída em: <b>${fmt(dataInicioFerias)}</b>.<br>Férias neste mês: <b>${diasDeFeriasNoMes} dias</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
     } else if (modo === 'retorno_ferias') {
-        feedbackFerias.innerHTML = `
-            Retorno em: <b>${fmt(dataFimFerias)}</b> (Fim das férias).<br>
-            Dias de férias neste mês: <b>${diasDeFeriasNoMes}</b>.<br>
-            Trabalhou após o retorno: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
-        `;
+        feedbackFerias.innerHTML = `Retorno (Fim Férias): <b>${fmt(dataFimFerias)}</b>.<br>Férias neste mês: <b>${diasDeFeriasNoMes} dias</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
     }
 }
 
-// --- Lógica Principal de Cálculo ---
+// --- FUNÇÕES AUXILIARES E INIT ---
 function handleCalcular() {
-    if (!regrasCalculo) {
-        alert('As regras de cálculo ainda não foram carregadas.');
-        return;
-    }
     const inputs = {
         salario: parseFloat(document.getElementById('salario').value) || 0,
         diasTrab: parseInt(document.getElementById('diasTrab').value) || 0,
@@ -227,7 +280,7 @@ function handleCalcular() {
     renderizarResultados(resultado);
 }
 
-// --- Funções Auxiliares (Feriados, localStorage, etc.) ---
+// Auxiliares de Feriado e Dados Fixos
 function adicionarFeriado() {
     const dia = document.getElementById('diaFeriado').value;
     const mesAno = document.getElementById('mesReferencia').value;
@@ -255,7 +308,7 @@ function adicionarFeriado() {
 }
 
 function limparFeriados() {
-    if (confirm('Tem certeza que deseja remover todos os feriados adicionados?')) {
+    if (confirm('Remover todos os feriados adicionados?')) {
         document.getElementById('feriadosExtras').value = '';
         document.getElementById('listaFeriados').innerHTML = '';
         preencherDiasMes();
@@ -281,9 +334,7 @@ function preencherDiasMes() {
         const [dia, mesFix] = fix.split('/');
         if (parseInt(mesFix) === mes) {
             const dataFeriado = new Date(ano, mes - 1, parseInt(dia));
-            if (dataFeriado.getDay() !== 0) {
-                feriadosNacionaisNoMes++;
-            }
+            if (dataFeriado.getDay() !== 0) feriadosNacionaisNoMes++;
         }
     });
     const feriadosExtras = document.getElementById('feriadosExtras').value;
@@ -291,9 +342,8 @@ function preencherDiasMes() {
     document.getElementById('diasUteis').value = diasUteis - qtdFeriados - feriadosNacionaisNoMes;
     document.getElementById('domFeriados').value = domingos + qtdFeriados + feriadosNacionaisNoMes;
     
-    // Se estiver em modo de férias (saída ou retorno), recalcula
-    const modo = document.querySelector('input[name="tipoDias"]:checked')?.value;
-    if(modo === 'saida_ferias' || modo === 'retorno_ferias') {
+    // Recalcula ferias ao mudar mês
+    if(document.querySelector('input[name="tipoDias"]:checked')?.value !== 'completo') {
         calcularDiasProporcionaisFerias();
     }
 }
@@ -306,7 +356,7 @@ function salvarDadosFixos() {
         sindicato: document.getElementById('sindicato').value
     };
     localStorage.setItem('dadosFixosCalculadora', JSON.stringify(dados));
-    alert('Dados fixos salvos com sucesso!');
+    alert('Dados salvos!');
 }
 
 function restaurarDadosFixos() {
@@ -319,15 +369,9 @@ function restaurarDadosFixos() {
     }
 }
 
-// --- Inicialização e Event Listeners ---
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        regrasCalculo = await fetch('regras.json').then(res => res.json());
-    } catch (error) {
-        console.error('Falha ao carregar as regras de cálculo:', error);
-        alert('Erro ao carregar configurações. Verifique a conexão.');
-    }
-
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    // Listeners Gerais
     document.getElementById('btn-calcular').addEventListener('click', handleCalcular);
     document.getElementById('btn-voltar').addEventListener('click', mostrarFormulario);
     document.getElementById('btn-salvar').addEventListener('click', salvarDadosFixos);
@@ -335,45 +379,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-limpar-feriados').addEventListener('click', limparFeriados);
     mesReferenciaInput.addEventListener('change', preencherDiasMes);
     
-    // Listeners para a nova lógica de 3 modos
+    // Listeners Férias
     document.querySelectorAll('input[name="tipoDias"]').forEach(radio => {
         radio.addEventListener('change', alternarModoDias);
     });
     inicioFeriasInput.addEventListener('change', calcularDiasProporcionaisFerias);
     qtdDiasFeriasInput.addEventListener('input', calcularDiasProporcionaisFerias);
-    
+
     // Conversor Automático de Horas
-    const camposDeHora = document.querySelectorAll('.hora-conversivel');
-    function converterInputParaDecimal() {
-        let valor = this.value.replace('h', ':').replace(',', '.').trim();
-        if (valor.includes(':')) {
-            const partes = valor.split(':');
-            const horas = parseFloat(partes[0]) || 0;
-            const minutos = parseFloat(partes[1]) || 0;
-            if(minutos < 0 || minutos > 59) {
-                 this.value = horas.toFixed(2);
-                 return;
+    document.querySelectorAll('.hora-conversivel').forEach(campo => {
+        campo.addEventListener('blur', function() {
+            let valor = this.value.replace('h', ':').replace(',', '.').trim();
+            if (valor.includes(':')) {
+                const [h, m] = valor.split(':').map(Number);
+                this.value = (h + (m/60)).toFixed(2);
+            } else if (valor) {
+                this.value = parseFloat(valor).toFixed(2);
             }
-            this.value = (horas + (minutos / 60)).toFixed(2);
-        } else if (valor) {
-            const valorDecimal = parseFloat(valor) || 0;
-            this.value = valorDecimal.toFixed(2);
-        } else {
-            this.value = '';
-        }
-    }
-    camposDeHora.forEach(campo => {
-        campo.addEventListener('blur', converterInputParaDecimal);
+        });
     });
 
     restaurarDadosFixos();
-    // Inicia no modo correto (Mensal padrão)
-    alternarModoDias();
+    alternarModoDias(); // Inicia estado correto dos radios
     preencherDiasMes();
     
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(() => console.log('Service Worker registrado com sucesso!'))
-            .catch(error => console.log('Erro ao registrar Service Worker:', error));
+    // Service Worker (Descomente apenas em Produção/HTTPS se desejar PWA)
+    if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+         navigator.serviceWorker.register('sw.js');
     }
 });
