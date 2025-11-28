@@ -41,19 +41,31 @@
                             <label><input type="radio" name="tipoDias" value="retorno_ferias" /> 3. Mês de Retorno de Férias</label>
                         </div>
                         
-                        <div id="box-calculo-ferias" class="feriado-container hidden" style="margin-top: 10px; background-color: #e3f2fd; border-color: #90caf9;">
-                            <label style="font-size: 0.9em; color: #0d47a1; margin-bottom: 5px; display:block; font-weight:bold;">Dados do Recibo de Férias:</label>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 120px;">
-                                    <label for="inicioFerias" style="font-size: 0.8em;">Data de Início das Férias</label>
-                                    <input type="date" id="inicioFerias" style="width: 100%; padding: 8px;">
+                        <div id="box-calculo-ferias" class="feriado-container hidden" style="margin-top: 10px; background-color: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 8px;">
+                            
+                            <label style="font-size: 0.95em; color: #0d47a1; margin-bottom: 8px; display:block; font-weight:bold;">
+                                Dados do Recibo de Férias:
+                            </label>
+
+                            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; align-items: end;">
+                                
+                                <div>
+                                    <label for="inicioFerias" style="font-size: 0.85em; display: block; margin-bottom: 4px; color: #333; white-space: nowrap;">
+                                        Data de Início
+                                    </label>
+                                    <input type="date" id="inicioFerias" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #bbb; border-radius: 4px;">
                                 </div>
-                                <div style="flex: 1; min-width: 80px;">
-                                    <label for="qtdDiasFerias" style="font-size: 0.8em;">Qtd. Dias de Gozo</label>
-                                    <input type="number" id="qtdDiasFerias" placeholder="Ex: 30" style="width: 100%; padding: 8px;">
+
+                                <div>
+                                    <label for="qtdDiasFerias" style="font-size: 0.85em; display: block; margin-bottom: 4px; color: #333; white-space: nowrap;">
+                                        Qtd. Dias
+                                    </label>
+                                    <input type="number" id="qtdDiasFerias" placeholder="Ex: 30" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #bbb; border-radius: 4px;">
                                 </div>
+
                             </div>
-                            <p id="feedback-ferias" style="font-size: 0.85em; color: #555; margin-top: 8px; font-style: italic; line-height: 1.4; border-top: 1px solid #bbdefb; padding-top: 5px;"></p>
+
+                            <p id="feedback-ferias" style="font-size: 0.85em; color: #555; margin-top: 10px; font-style: italic; line-height: 1.4; border-top: 1px solid #bbdefb; padding-top: 8px; min-height: 20px;"></p>
                         </div>
                     
                         <label for="diasTrab" style="margin-top: 10px; display: block;">Dias de Salário a Pagar</label>
@@ -161,6 +173,6 @@
 
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
