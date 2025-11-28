@@ -19,7 +19,7 @@ body {
     padding: 20px;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Alinha no topo para não centralizar verticalmente em telas grandes */
+    align-items: flex-start;
     min-height: 100vh;
 }
 
@@ -28,7 +28,7 @@ body {
     padding: 30px 40px;
     border-radius: 10px;
     box-shadow: var(--shadow-light);
-    max-width: 1000px; /* Aumentado para acomodar 3 colunas */
+    max-width: 1000px;
     width: 100%;
     box-sizing: border-box;
 }
@@ -53,16 +53,15 @@ h2.form-section-title {
 
 .form-columns-container {
     display: flex;
-    gap: 30px; /* Espaço entre as colunas */
-    flex-wrap: wrap; /* Permite que as colunas quebrem em telas menores */
+    gap: 30px;
+    flex-wrap: wrap;
     justify-content: center;
 }
 
 .form-column {
-    flex: 1; /* Cada coluna ocupa uma parte igual */
-    min-width: 280px; /* Largura mínima para evitar que fiquem muito estreitas */
+    flex: 1;
+    min-width: 280px;
 }
-
 
 .input-group {
     margin-bottom: 18px;
@@ -77,31 +76,16 @@ h2.form-section-title {
 }
 
 .input-group input[type="number"],
-.input-group input[type="text"], /* Adicionado aqui para os campos de hora */
+.input-group input[type="text"],
 .input-group input[type="month"],
+.input-group input[type="date"],
 .input-group select {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     font-size: 1em;
-    box-sizing: border-box; /* Garante que padding e border não aumentem a largura total */
-    -webkit-appearance: none; /* Remove estilos padrão do iOS para inputs de texto/number */
-    -moz-appearance: textfield; /* Remove setas em Firefox */
-    appearance: none; /* Remove setas em Chrome/Safari/Edge */
-}
-
-/* ESPECÍFICO PARA OS NOVOS CAMPOS DE HORA */
-input[type="text"].hora-conversivel::placeholder {
-    font-size: 0.9em; /* Placeholder um pouco menor */
-    color: #a0a0a0;
-}
-
-.input-group input:focus,
-.input-group select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.2);
+    box-sizing: border-box;
 }
 
 .radio-group {
@@ -119,11 +103,6 @@ input[type="text"].hora-conversivel::placeholder {
     cursor: pointer;
 }
 
-.radio-group input[type="radio"] {
-    margin-right: 5px;
-    transform: scale(1.1);
-}
-
 .btn-primary, .btn-secondary {
     padding: 12px 25px;
     border: none;
@@ -132,34 +111,16 @@ input[type="text"].hora-conversivel::placeholder {
     cursor: pointer;
     transition: background-color 0.3s ease;
     margin-top: 20px;
-    width: 100%; /* Botões com largura total */
+    width: 100%;
     box-sizing: border-box;
 }
 
-.btn-primary {
-    background-color: var(--primary-color);
-    color: white;
-}
+.btn-primary { background-color: var(--primary-color); color: white; }
+.btn-primary:hover { background-color: #0a3a8d; }
+.btn-secondary { background-color: var(--secondary-color); color: white; margin-top: 10px; }
+.btn-secondary:hover { background-color: #5a6268; }
 
-.btn-primary:hover {
-    background-color: #0a3a8d;
-}
-
-.btn-secondary {
-    background-color: var(--secondary-color);
-    color: white;
-    margin-top: 10px;
-}
-
-.btn-secondary:hover {
-    background-color: #5a6268;
-}
-
-/* Estilos para a visualização de resultados */
-#result-view {
-    margin-top: 30px;
-}
-
+#result-view { margin-top: 30px; }
 #resultado-container {
     background-color: #f9f9f9;
     border: 1px solid var(--border-color);
@@ -168,167 +129,25 @@ input[type="text"].hora-conversivel::placeholder {
     margin-bottom: 25px;
 }
 
-.result-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
+.result-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+.result-table th, .result-table td { padding: 12px 15px; border-bottom: 1px solid #eee; text-align: left; }
+.result-table th { background-color: #f0f0f0; font-weight: 600; color: #555; text-transform: uppercase; font-size: 0.9em; }
+.result-table td.valor { text-align: right; font-weight: 500; }
+.result-table .section-header td { background-color: var(--primary-color); color: white; font-weight: 700; text-align: center; padding: 10px 15px; margin-top: 15px; }
+.result-table .summary-row td { font-weight: 600; background-color: #e6f0ff; }
+.result-table .final-result-main td { font-weight: 700; font-size: 1.2em; background-color: #d0e6ff; border-top: 2px solid var(--primary-color); }
+.result-table .final-result-secondary td { font-weight: 600; background-color: #e6f0ff; font-size: 0.95em; }
+.result-table .fgts-row td { font-style: italic; font-size: 0.9em; color: #666; }
 
-.result-table th, .result-table td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
-}
+.feriado-container { border: 1px solid var(--border-color); border-radius: 5px; padding: 10px; background-color: #fcfcfc; }
+.feriado-actions { display: flex; gap: 10px; margin-bottom: 10px; }
+.lista-feriados { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 5px; min-height: 30px; }
+.feriado-box { background-color: #e0e0e0; color: #333; padding: 5px 10px; border-radius: 4px; font-size: 0.85em; cursor: pointer; }
+.feriado-box:hover { background-color: #ccc; }
 
-.result-table th {
-    background-color: #f0f0f0;
-    font-weight: 600;
-    color: #555;
-    text-transform: uppercase;
-    font-size: 0.9em;
-}
+.hidden { display: none !important; }
 
-.result-table td.valor {
-    text-align: right;
-    font-weight: 500;
-}
-
-.result-table .section-header td {
-    background-color: var(--primary-color);
-    color: white;
-    font-weight: 700;
-    font-size: 1.1em;
-    text-align: center;
-    padding: 10px 15px;
-    border-bottom: 2px solid white;
-    border-top: 2px solid white;
-    margin-top: 15px; /* Espaço acima do cabeçalho de seção */
-}
-.result-table .section-header:first-of-type td {
-    border-top: none; /* Remove borda superior do primeiro cabeçalho */
-}
-
-
-.result-table .summary-row td {
-    font-weight: 600;
-    background-color: #e6f0ff;
-}
-
-.result-table .final-result-main td {
-    font-weight: 700;
-    font-size: 1.2em;
-    background-color: #d0e6ff;
-    border-top: 2px solid var(--primary-color);
-}
-.result-table .final-result-secondary td {
-    font-weight: 600;
-    background-color: #e6f0ff;
-    font-size: 0.95em;
-}
-
-.result-table .fgts-row td {
-    font-style: italic;
-    font-size: 0.9em;
-    color: #666;
-}
-
-.hidden {
-    display: none;
-}
-
-/* Estilos para Feriados */
-.feriado-container {
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    padding: 10px;
-    background-color: #fcfcfc;
-}
-.feriado-actions {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-.feriado-actions select, .feriado-actions button {
-    padding: 8px 12px;
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
-    font-size: 0.9em;
-}
-.feriado-actions button {
-    background-color: var(--primary-color);
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.feriado-actions button:hover {
-    background-color: #0a3a8d;
-}
-.feriado-actions button[style*="background:#c00"] { /* Botão Limpar */
-    background-color: #c00;
-    border-color: #c00;
-}
-.feriado-actions button[style*="background:#c00"]:hover {
-    background-color: #a00;
-}
-
-.lista-feriados {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding-top: 5px;
-    min-height: 30px; /* Para manter o espaçamento */
-}
-.feriado-box {
-    background-color: #e0e0e0;
-    color: #333;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 0.85em;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.feriado-box:hover {
-    background-color: #ccc;
-}
-
-
-/* Media Queries para Responsividade */
 @media (max-width: 768px) {
-    .container {
-        padding: 20px;
-        margin: 10px;
-    }
-
-    h1 {
-        font-size: 1.8em;
-    }
-
-    .form-columns-container {
-        flex-direction: column; /* Colunas empilhadas em telas menores */
-        gap: 20px;
-    }
-
-    .form-column {
-        min-width: unset; /* Remove largura mínima em telas pequenas */
-    }
-
-    .btn-primary, .btn-secondary {
-        font-size: 1em;
-        padding: 10px 20px;
-    }
-
-    .feriado-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-}
-
-@media (max-width: 480px) {
-    .container {
-        padding: 15px;
-    }
-    .feriado-actions select, .feriado-actions button {
-        width: 100%;
-        box-sizing: border-box;
-    }
+    .form-columns-container { flex-direction: column; }
+    .feriado-actions { flex-direction: column; }
 }
