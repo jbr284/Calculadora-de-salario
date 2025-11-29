@@ -1,4 +1,4 @@
-const CACHE_NAME = 'salario-dtc-cache-v2'; // Mudei a versão para forçar a atualização do cache
+const CACHE_NAME = 'salario-Modular-cache-v2'; // Mudei a versão para forçar a atualização do cache
 const urlsToCache = [
   './', // O ponto indica a pasta atual
   'index.html',
@@ -44,3 +44,4 @@ self.addEventListener('fetch', event => {
       })
   );
 });
+
