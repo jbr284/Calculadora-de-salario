@@ -1,4 +1,4 @@
-// app.js - VERSÃO COM LÓGICA DE RETORNO CORRIGIDA
+// app.js - VERSÃO COM CORREÇÃO DE FUSO HORÁRIO E LÓGICA DE DP
 
 // --- 1. DADOS E REGRAS ---
 const regrasCalculo = {
@@ -104,7 +104,7 @@ const mesReferenciaInput = document.getElementById('mesReferencia');
 // Seletores de Férias
 const boxCalculoFerias = document.getElementById('box-calculo-ferias');
 const diasTrabInput = document.getElementById('diasTrab');
-const inicioFeriasInput = document.getElementById('inicioFerias'); // Data (Genérica)
+const inicioFeriasInput = document.getElementById('inicioFerias'); 
 const qtdDiasFeriasInput = document.getElementById('qtdDiasFerias');
 const feedbackFerias = document.getElementById('feedback-ferias');
 
@@ -179,7 +179,7 @@ function renderizarResultados(resultado) {
     mostrarResultados();
 }
 
-// --- LÓGICA DE FÉRIAS (3 MODOS - CORRIGIDA) ---
+// --- LÓGICA DE FÉRIAS CORRIGIDA (SEM ERRO DE FUSO) ---
 function alternarModoDias() {
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
     if(!opcaoSelecionada) return;
@@ -196,90 +196,70 @@ function alternarModoDias() {
         diasTrabInput.style.backgroundColor = "#f0f0f0";
         feedbackFerias.textContent = "";
     } else {
-        // Mostra a caixa para modos 2 e 3
         boxCalculoFerias.classList.remove('hidden');
         
-        // Ajuste de UI para Retorno vs Saída
         if (modo === 'retorno_ferias') {
-            colQtd.classList.add('hidden');  // Esconde quantidade
-            lblData.textContent = "Data do Retorno"; // Muda label
+            colQtd.classList.add('hidden'); 
+            lblData.textContent = "Data do Retorno"; 
         } else {
-            colQtd.classList.remove('hidden'); // Mostra quantidade
-            lblData.textContent = "Data de Início"; // Muda label
+            colQtd.classList.remove('hidden'); 
+            lblData.textContent = "Data de Início"; 
         }
-
         calcularDiasProporcionaisFerias();
     }
 }
 
 function calcularDiasProporcionaisFerias() {
-    const mesRefStr = mesReferenciaInput.value; 
     const dataInputStr = inicioFeriasInput.value; 
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
 
-    if (!mesRefStr || !opcaoSelecionada) return;
+    if (!opcaoSelecionada) return;
     const modo = opcaoSelecionada.value;
 
-    // Se for saída, precisa da quantidade. Se for retorno, não.
-    const diasFerias = parseInt(qtdDiasFeriasInput.value);
-    
-    if (modo === 'saida_ferias' && (!dataInputStr || !diasFerias)) {
+    if (modo === 'saida_ferias' && !dataInputStr) {
         diasTrabInput.value = "";
-        feedbackFerias.innerHTML = "Informe a Data de Início e a Qtd de Dias.";
+        feedbackFerias.innerHTML = "Selecione a Data de Início.";
         return;
     }
     if (modo === 'retorno_ferias' && !dataInputStr) {
         diasTrabInput.value = "";
-        feedbackFerias.innerHTML = "Informe a Data que o colaborador retornou.";
+        feedbackFerias.innerHTML = "Selecione a Data de Retorno.";
         return;
     }
 
-    const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
-    const inicioMesRef = new Date(anoRef, mesRef - 1, 1);
-    const fimMesRef = new Date(anoRef, mesRef, 0); 
-    const dataInput = new Date(dataInputStr);
-    const fmt = date => date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+    // --- CORREÇÃO DE FUSO HORÁRIO ---
+    // Dividimos a string manualmente para evitar que o "new Date()" converta para UTC-3
+    // Ex: "2024-12-20" vira [2024, 12, 20]
+    const [ano, mes, dia] = dataInputStr.split('-').map(Number);
+    const dataFormatada = `${dia.toString().padStart(2,'0')}/${mes.toString().padStart(2,'0')}/${ano}`;
 
     let diasTrabalhados = 0;
 
-    // --- LÓGICA 2: SAÍDA DE FÉRIAS (Calcula Interseção) ---
+    // Lógica 2: SAÍDA (Trabalhou até o dia anterior ao início)
     if (modo === 'saida_ferias') {
-        const dataFimFerias = new Date(dataInput);
-        dataFimFerias.setDate(dataFimFerias.getDate() + diasFerias - 1);
-
-        const inicioIntersecao = new Date(Math.max(inicioMesRef, dataInput));
-        const fimIntersecao = new Date(Math.min(fimMesRef, dataFimFerias));
-
-        let diasDeFeriasNoMes = 0;
-        if (inicioIntersecao <= fimIntersecao) {
-            const diffTempo = fimIntersecao - inicioIntersecao;
-            diasDeFeriasNoMes = Math.ceil(diffTempo / (1000 * 60 * 60 * 24)) + 1;
-        }
+        // Ex: Início dia 20. Trabalhou 19 dias (1 ao 19).
+        diasTrabalhados = dia - 1;
         
-        diasTrabalhados = 30 - diasDeFeriasNoMes;
         if (diasTrabalhados < 0) diasTrabalhados = 0;
-        
-        feedbackFerias.innerHTML = `Saída em: <b>${fmt(dataInput)}</b>.<br>Férias neste mês: <b>${diasDeFeriasNoMes} dias</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
+        if (diasTrabalhados > 30) diasTrabalhados = 30; // Trava em 30 para meses de 31 dias
+
+        feedbackFerias.innerHTML = `Saída em: <b>${dataFormatada}</b>.<br>Trabalhou até dia: <b>${(dia-1)}</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
     } 
     
-    // --- LÓGICA 3: RETORNO DE FÉRIAS (Simples: 30 - Dias Perdidos) ---
+    // Lógica 3: RETORNO (30 - Dias Perdidos)
     else if (modo === 'retorno_ferias') {
-        // O dia do retorno é um dia trabalhado. 
-        // Os dias perdidos são os anteriores a ele no mês.
-        // Ex: Voltou dia 20. Dias perdidos = 19. Salário = 30 - 19 = 11.
-        // Pegar o dia exato da data de input (considerando timezone, split é mais seguro)
-        const diaRetorno = parseInt(dataInputStr.split('-')[2]);
-        
-        const diasPerdidos = diaRetorno - 1;
+        // Ex: Retornou dia 20. 
+        // Perdeu 19 dias (1 ao 19).
+        // Saldo = 30 - 19 = 11 dias.
+        const diasPerdidos = dia - 1;
         diasTrabalhados = 30 - diasPerdidos;
 
         if (diasTrabalhados < 0) diasTrabalhados = 0;
         if (diasTrabalhados > 30) diasTrabalhados = 30;
 
-        feedbackFerias.innerHTML = `Retornou dia: <b>${fmt(dataInput)}</b>.<br>Ficou fora: <b>${diasPerdidos} dias</b> (início do mês).<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
+        feedbackFerias.innerHTML = `Retornou dia: <b>${dataFormatada}</b>.<br>Esteve fora: <b>${diasPerdidos} dias</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
     }
 
-    if (diasTrabalhados > 30) diasTrabalhados = 30;
     diasTrabInput.value = diasTrabalhados;
 }
 
