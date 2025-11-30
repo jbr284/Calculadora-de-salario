@@ -37,7 +37,7 @@
                         <label>Situação do Funcionário no Mês</label>
                         <div class="radio-group" style="flex-direction: column; align-items: flex-start; gap: 8px;">
                             <label><input type="radio" name="tipoDias" value="completo" checked /> 1. Mês Completo (30 Dias)</label>
-                            <label><input type="radio" name="tipoDias" value="saida_ferias" /> 2. Mês de Férias</label>
+                            <label><input type="radio" name="tipoDias" value="saida_ferias" /> 2. Mês de Saída de Férias</label>
                             <label><input type="radio" name="tipoDias" value="retorno_ferias" /> 3. Mês de Retorno de Férias</label>
                         </div>
                         
@@ -77,8 +77,13 @@
                     </div>
                     
                     <div class="input-group">
-                        <label class="form-section-title" style="margin: 0; font-size: 1.1em;">Feriados (Opcional)</label>
+                        <label class="form-section-title" style="margin: 0; font-size: 1.1em;">Feriados Regionais</label>
                         <div class="feriado-container">
+                            
+                            <p style="font-size: 0.85em; color: #555; margin-bottom: 8px; margin-top: 0; line-height: 1.3;">
+                                <strong style="color: #0d47a1;">Dica:</strong> Adicione aqui feriados municipais e estaduais para o cálculo correto do DSR.
+                            </p>
+
                             <div class="feriado-actions">
                                 <select id="diaFeriado">
                                     <option value="">Dia</option>
@@ -176,4 +181,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
