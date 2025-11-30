@@ -1,4 +1,4 @@
-const CACHE_NAME = 'salario-dtc-cache-v5'; // <--- MUDE AQUI PARA FORÇAR ATUALIZAÇÃO
+const CACHE_NAME = 'salario-dtc-cache-v6'; // <--- MUDE AQUI PARA FORÇAR ATUALIZAÇÃO
 const urlsToCache = [
   './',
   'index.html',
@@ -41,3 +41,4 @@ self.addEventListener('fetch', event => {
       })
   );
 });
+
