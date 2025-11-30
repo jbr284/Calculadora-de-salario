@@ -1,4 +1,4 @@
-const CACHE_NAME = 'salario-dtc-cache-v6'; // <--- MUDE AQUI PARA FORÇAR ATUALIZAÇÃO
+const CACHE_NAME = 'salario-dtc-cache-v6'; // <--- MUDEI PARA v6
 const urlsToCache = [
   './',
   'index.html',
@@ -10,7 +10,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Força a instalação imediata
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
@@ -28,17 +28,44 @@ self.addEventListener('activate', event => {
         })
       );
     }).then(() => {
-      return self.clients.claim(); // Assume o controle da página imediatamente
+      return self.clients.claim();
     })
   );
 });
 
+// --- A MÁGICA ACONTECE AQUI (Network First) ---
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
-      })
-  );
-});
+  const requestUrl = new URL(event.request.url);
 
+  // Arquivos CRÍTICOS: Sempre tentar baixar da rede primeiro
+  // Se falhar (offline), pega do cache
+  if (requestUrl.pathname.endsWith('index.html') || 
+      requestUrl.pathname.endsWith('app.js') || 
+      requestUrl.pathname.endsWith('style.css') ||
+      requestUrl.pathname.endsWith('/')) { // Raiz
+    
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Se deu certo baixar, atualiza o cache com a versão nova
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Se deu erro (offline), usa o cache
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // Para imagens e outros arquivos, continua Cache Primeiro (mais rápido)
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          return response || fetch(event.request);
+        })
+    );
+  }
+});
