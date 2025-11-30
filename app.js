@@ -1,4 +1,4 @@
-// app.js - VERSÃO COM CORREÇÃO DE FUSO HORÁRIO E LÓGICA DE DP
+// app.js - VERSÃO COM SELEÇÃO DE DIA SIMPLIFICADA
 
 // --- 1. DADOS E REGRAS ---
 const regrasCalculo = {
@@ -104,7 +104,7 @@ const mesReferenciaInput = document.getElementById('mesReferencia');
 // Seletores de Férias
 const boxCalculoFerias = document.getElementById('box-calculo-ferias');
 const diasTrabInput = document.getElementById('diasTrab');
-const inicioFeriasInput = document.getElementById('inicioFerias'); 
+const inicioFeriasInput = document.getElementById('inicioFerias'); // AGORA É UM SELECT (dia 1-31)
 const qtdDiasFeriasInput = document.getElementById('qtdDiasFerias');
 const feedbackFerias = document.getElementById('feedback-ferias');
 
@@ -179,7 +179,7 @@ function renderizarResultados(resultado) {
     mostrarResultados();
 }
 
-// --- LÓGICA DE FÉRIAS CORRIGIDA (SEM ERRO DE FUSO) ---
+// --- LÓGICA DE FÉRIAS (3 MODOS) ---
 function alternarModoDias() {
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
     if(!opcaoSelecionada) return;
@@ -200,58 +200,69 @@ function alternarModoDias() {
         
         if (modo === 'retorno_ferias') {
             colQtd.classList.add('hidden'); 
-            lblData.textContent = "Data do Retorno"; 
+            lblData.textContent = "Dia do Retorno"; // Alterado para "Dia" apenas
         } else {
             colQtd.classList.remove('hidden'); 
-            lblData.textContent = "Data de Início"; 
+            lblData.textContent = "Dia de Início"; 
         }
         calcularDiasProporcionaisFerias();
     }
 }
 
 function calcularDiasProporcionaisFerias() {
-    const dataInputStr = inicioFeriasInput.value; 
+    // 1. Pega dados: Mês/Ano do topo e Dia do select
+    const mesRefStr = mesReferenciaInput.value; 
+    const diaSelecionado = parseInt(inicioFeriasInput.value); // Valor do Select (1-31)
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
 
     if (!opcaoSelecionada) return;
     const modo = opcaoSelecionada.value;
 
-    if (modo === 'saida_ferias' && !dataInputStr) {
+    // Validações
+    if (modo === 'saida_ferias' && (!diaSelecionado)) {
         diasTrabInput.value = "";
-        feedbackFerias.innerHTML = "Selecione a Data de Início.";
+        feedbackFerias.innerHTML = "Selecione o Dia de Início.";
         return;
     }
-    if (modo === 'retorno_ferias' && !dataInputStr) {
+    if (modo === 'retorno_ferias' && !diaSelecionado) {
         diasTrabInput.value = "";
-        feedbackFerias.innerHTML = "Selecione a Data de Retorno.";
+        feedbackFerias.innerHTML = "Selecione o Dia de Retorno.";
+        return;
+    }
+    
+    // Se não tiver mês de referência, pede
+    if (!mesRefStr) {
+        diasTrabInput.value = "";
+        feedbackFerias.innerHTML = "Selecione o Mês de Referência (topo).";
         return;
     }
 
-    // --- CORREÇÃO DE FUSO HORÁRIO ---
-    // Dividimos a string manualmente para evitar que o "new Date()" converta para UTC-3
-    // Ex: "2024-12-20" vira [2024, 12, 20]
-    const [ano, mes, dia] = dataInputStr.split('-').map(Number);
-    const dataFormatada = `${dia.toString().padStart(2,'0')}/${mes.toString().padStart(2,'0')}/${ano}`;
+    // --- CONSTRUÇÃO DA DATA (Mês do Topo + Dia do Select) ---
+    const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
+    // Validação de segurança: garantir que o dia existe naquele mês (ex: não existe 31 de Fev)
+    const ultimoDiaMes = new Date(anoRef, mesRef, 0).getDate();
+    const diaValidado = Math.min(diaSelecionado, ultimoDiaMes);
+    
+    // Monta a string visual
+    const dataFormatada = `${diaValidado.toString().padStart(2,'0')}/${mesRef.toString().padStart(2,'0')}/${anoRef}`;
 
     let diasTrabalhados = 0;
 
     // Lógica 2: SAÍDA (Trabalhou até o dia anterior ao início)
     if (modo === 'saida_ferias') {
         // Ex: Início dia 20. Trabalhou 19 dias (1 ao 19).
-        diasTrabalhados = dia - 1;
+        diasTrabalhados = diaValidado - 1;
         
         if (diasTrabalhados < 0) diasTrabalhados = 0;
-        if (diasTrabalhados > 30) diasTrabalhados = 30; // Trava em 30 para meses de 31 dias
+        if (diasTrabalhados > 30) diasTrabalhados = 30; 
 
-        feedbackFerias.innerHTML = `Saída em: <b>${dataFormatada}</b>.<br>Trabalhou até dia: <b>${(dia-1)}</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
+        feedbackFerias.innerHTML = `Saída dia: <b>${dataFormatada}</b>.<br>Trabalhou até dia: <b>${(diaValidado-1)}</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
     } 
     
     // Lógica 3: RETORNO (30 - Dias Perdidos)
     else if (modo === 'retorno_ferias') {
-        // Ex: Retornou dia 20. 
-        // Perdeu 19 dias (1 ao 19).
-        // Saldo = 30 - 19 = 11 dias.
-        const diasPerdidos = dia - 1;
+        // Ex: Retornou dia 20. Perdeu 19 dias.
+        const diasPerdidos = diaValidado - 1;
         diasTrabalhados = 30 - diasPerdidos;
 
         if (diasTrabalhados < 0) diasTrabalhados = 0;
@@ -391,6 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('input[name="tipoDias"]').forEach(radio => {
         radio.addEventListener('change', alternarModoDias);
     });
+    // O evento agora é no Select, não mais Date Input
     inicioFeriasInput.addEventListener('change', calcularDiasProporcionaisFerias);
     qtdDiasFeriasInput.addEventListener('input', calcularDiasProporcionaisFerias);
 
