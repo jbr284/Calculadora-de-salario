@@ -1,4 +1,4 @@
-const CACHE_NAME = 'salario-dtc-cache-v4'; // Aumente SEMPRE este número quando mudar algo (v3 -> v4)
+const CACHE_NAME = 'salario-dtc-cache-v5'; // <--- MUDE AQUI PARA FORÇAR ATUALIZAÇÃO
 const urlsToCache = [
   './',
   'index.html',
@@ -9,39 +9,30 @@ const urlsToCache = [
   'icons/icon-512.png'
 ];
 
-// 1. INSTALAÇÃO: Força a atualização imediata (skipWaiting)
 self.addEventListener('install', event => {
-  // Força o SW novo a entrar em ação sem esperar o antigo fechar
-  self.skipWaiting(); 
-  
+  self.skipWaiting(); // Força a instalação imediata
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Cache aberto');
-        return cache.addAll(urlsToCache);
-      })
+      .then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// 2. ATIVAÇÃO: Assume o controle das páginas abertas (clients.claim)
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cache => {
           if (cache !== CACHE_NAME) {
-            return caches.delete(cache); // Limpa caches antigos
+            return caches.delete(cache);
           }
         })
       );
     }).then(() => {
-      // Diz para o navegador: "Comece a usar este SW novo AGORA em todas as abas"
-      return self.clients.claim(); 
+      return self.clients.claim(); // Assume o controle da página imediatamente
     })
   );
 });
 
-// 3. FETCH: Intercepta as requisições
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
