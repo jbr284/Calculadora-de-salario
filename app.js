@@ -1,4 +1,4 @@
-// app.js - VERSÃO COM SELEÇÃO DE DIA SIMPLIFICADA
+// app.js - VERSÃO COM AUTO-UPDATE E SELECT DE DIAS
 
 // --- 1. DADOS E REGRAS ---
 const regrasCalculo = {
@@ -104,11 +104,11 @@ const mesReferenciaInput = document.getElementById('mesReferencia');
 // Seletores de Férias
 const boxCalculoFerias = document.getElementById('box-calculo-ferias');
 const diasTrabInput = document.getElementById('diasTrab');
-const inicioFeriasInput = document.getElementById('inicioFerias'); // AGORA É UM SELECT (dia 1-31)
+const inicioFeriasInput = document.getElementById('inicioFerias'); // Select (1-31)
 const qtdDiasFeriasInput = document.getElementById('qtdDiasFerias');
 const feedbackFerias = document.getElementById('feedback-ferias');
 
-// Elementos de UI para esconder/mostrar
+// Elementos de UI
 const colData = document.getElementById('col-data');
 const colQtd = document.getElementById('col-qtd');
 const lblData = document.getElementById('lbl-data-ferias');
@@ -131,8 +131,6 @@ function formatarMoeda(valor) {
 function renderizarResultados(resultado) {
     const { proventos, descontos, liquido, fgts } = resultado;
     const liquidoMensal = liquido + descontos.adiantamento;
-    
-    // Helper para criar linhas da tabela
     const row = (label, val) => val > 0 ? `<tr><td>${label}</td><td class="valor">${formatarMoeda(val)}</td></tr>` : '';
 
     let htmlProventos = '';
@@ -179,14 +177,12 @@ function renderizarResultados(resultado) {
     mostrarResultados();
 }
 
-// --- LÓGICA DE FÉRIAS (3 MODOS) ---
+// --- LÓGICA DE FÉRIAS (3 MODOS + SELECT DIA) ---
 function alternarModoDias() {
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
     if(!opcaoSelecionada) return;
 
     const modo = opcaoSelecionada.value;
-    
-    // Configuração Visual do campo Dias
     diasTrabInput.style.backgroundColor = "#e8f0fe"; 
     diasTrabInput.readOnly = true;
 
@@ -200,7 +196,7 @@ function alternarModoDias() {
         
         if (modo === 'retorno_ferias') {
             colQtd.classList.add('hidden'); 
-            lblData.textContent = "Dia do Retorno"; // Alterado para "Dia" apenas
+            lblData.textContent = "Dia do Retorno"; 
         } else {
             colQtd.classList.remove('hidden'); 
             lblData.textContent = "Dia de Início"; 
@@ -210,16 +206,14 @@ function alternarModoDias() {
 }
 
 function calcularDiasProporcionaisFerias() {
-    // 1. Pega dados: Mês/Ano do topo e Dia do select
     const mesRefStr = mesReferenciaInput.value; 
-    const diaSelecionado = parseInt(inicioFeriasInput.value); // Valor do Select (1-31)
+    const diaSelecionado = parseInt(inicioFeriasInput.value); 
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
 
     if (!opcaoSelecionada) return;
     const modo = opcaoSelecionada.value;
 
-    // Validações
-    if (modo === 'saida_ferias' && (!diaSelecionado)) {
+    if (modo === 'saida_ferias' && !diaSelecionado) {
         diasTrabInput.value = "";
         feedbackFerias.innerHTML = "Selecione o Dia de Início.";
         return;
@@ -230,47 +224,32 @@ function calcularDiasProporcionaisFerias() {
         return;
     }
     
-    // Se não tiver mês de referência, pede
     if (!mesRefStr) {
         diasTrabInput.value = "";
         feedbackFerias.innerHTML = "Selecione o Mês de Referência (topo).";
         return;
     }
 
-    // --- CONSTRUÇÃO DA DATA (Mês do Topo + Dia do Select) ---
+    // Montagem da Data (Numérica)
     const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
-    // Validação de segurança: garantir que o dia existe naquele mês (ex: não existe 31 de Fev)
     const ultimoDiaMes = new Date(anoRef, mesRef, 0).getDate();
     const diaValidado = Math.min(diaSelecionado, ultimoDiaMes);
-    
-    // Monta a string visual
     const dataFormatada = `${diaValidado.toString().padStart(2,'0')}/${mesRef.toString().padStart(2,'0')}/${anoRef}`;
 
     let diasTrabalhados = 0;
 
-    // Lógica 2: SAÍDA (Trabalhou até o dia anterior ao início)
     if (modo === 'saida_ferias') {
-        // Ex: Início dia 20. Trabalhou 19 dias (1 ao 19).
         diasTrabalhados = diaValidado - 1;
-        
         if (diasTrabalhados < 0) diasTrabalhados = 0;
         if (diasTrabalhados > 30) diasTrabalhados = 30; 
-
         feedbackFerias.innerHTML = `Saída dia: <b>${dataFormatada}</b>.<br>Trabalhou até dia: <b>${(diaValidado-1)}</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
-    } 
-    
-    // Lógica 3: RETORNO (30 - Dias Perdidos)
-    else if (modo === 'retorno_ferias') {
-        // Ex: Retornou dia 20. Perdeu 19 dias.
+    } else if (modo === 'retorno_ferias') {
         const diasPerdidos = diaValidado - 1;
         diasTrabalhados = 30 - diasPerdidos;
-
         if (diasTrabalhados < 0) diasTrabalhados = 0;
         if (diasTrabalhados > 30) diasTrabalhados = 30;
-
         feedbackFerias.innerHTML = `Retornou dia: <b>${dataFormatada}</b>.<br>Esteve fora: <b>${diasPerdidos} dias</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
     }
-
     diasTrabInput.value = diasTrabalhados;
 }
 
@@ -299,7 +278,7 @@ function handleCalcular() {
     renderizarResultados(resultado);
 }
 
-// Auxiliares de Feriado e Dados Fixos
+// Auxiliares
 function adicionarFeriado() {
     const dia = document.getElementById('diaFeriado').value;
     const mesAno = document.getElementById('mesReferencia').value;
@@ -361,7 +340,6 @@ function preencherDiasMes() {
     document.getElementById('diasUteis').value = diasUteis - qtdFeriados - feriadosNacionaisNoMes;
     document.getElementById('domFeriados').value = domingos + qtdFeriados + feriadosNacionaisNoMes;
     
-    // Recalcula ferias ao mudar mês
     if(document.querySelector('input[name="tipoDias"]:checked')?.value !== 'completo') {
         calcularDiasProporcionaisFerias();
     }
@@ -388,9 +366,9 @@ function restaurarDadosFixos() {
     }
 }
 
-// Inicialização
+// Inicialização e AUTO-UPDATE
 document.addEventListener('DOMContentLoaded', () => {
-    // Listeners Gerais
+    // Listeners
     document.getElementById('btn-calcular').addEventListener('click', handleCalcular);
     document.getElementById('btn-voltar').addEventListener('click', mostrarFormulario);
     document.getElementById('btn-salvar').addEventListener('click', salvarDadosFixos);
@@ -398,15 +376,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-limpar-feriados').addEventListener('click', limparFeriados);
     mesReferenciaInput.addEventListener('change', preencherDiasMes);
     
-    // Listeners Férias
     document.querySelectorAll('input[name="tipoDias"]').forEach(radio => {
         radio.addEventListener('change', alternarModoDias);
     });
-    // O evento agora é no Select, não mais Date Input
     inicioFeriasInput.addEventListener('change', calcularDiasProporcionaisFerias);
     qtdDiasFeriasInput.addEventListener('input', calcularDiasProporcionaisFerias);
 
-    // Conversor Automático de Horas
+    // Conversor Horas
     document.querySelectorAll('.hora-conversivel').forEach(campo => {
         campo.addEventListener('blur', function() {
             let valor = this.value.replace('h', ':').replace(',', '.').trim();
@@ -420,11 +396,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     restaurarDadosFixos();
-    alternarModoDias(); // Inicia estado correto dos radios
+    alternarModoDias();
     preencherDiasMes();
     
-    // Service Worker (Descomente apenas em Produção/HTTPS se desejar PWA)
+    // --- LÓGICA DE AUTO-UPDATE PWA ---
     if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-         navigator.serviceWorker.register('sw.js');
+        
+        let refreshing = false;
+        // Quando o SW diz "mudei", a gente recarrega a página
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                window.location.reload();
+                refreshing = true;
+            }
+        });
+
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            // Se encontrar uma atualização
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                newWorker.addEventListener('statechange', () => {
+                    // Se o novo SW instalou, ele vai acionar o controllerchange
+                    // por causa do skipWaiting() no sw.js
+                    console.log('Novo SW estado:', newWorker.state);
+                });
+            });
+        });
     }
 });
