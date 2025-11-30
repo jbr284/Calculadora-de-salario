@@ -1,4 +1,4 @@
-// app.js - VERSÃO COM AUTO-UPDATE E SELECT DE DIAS
+// app.js - VERSÃO FINAL: Network-First + Auto Update + Select Dias
 
 // --- 1. DADOS E REGRAS ---
 const regrasCalculo = {
@@ -177,7 +177,7 @@ function renderizarResultados(resultado) {
     mostrarResultados();
 }
 
-// --- LÓGICA DE FÉRIAS (3 MODOS + SELECT DIA) ---
+// --- LÓGICA DE FÉRIAS ---
 function alternarModoDias() {
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
     if(!opcaoSelecionada) return;
@@ -230,7 +230,6 @@ function calcularDiasProporcionaisFerias() {
         return;
     }
 
-    // Montagem da Data (Numérica)
     const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
     const ultimoDiaMes = new Date(anoRef, mesRef, 0).getDate();
     const diaValidado = Math.min(diaSelecionado, ultimoDiaMes);
@@ -278,7 +277,6 @@ function handleCalcular() {
     renderizarResultados(resultado);
 }
 
-// Auxiliares
 function adicionarFeriado() {
     const dia = document.getElementById('diaFeriado').value;
     const mesAno = document.getElementById('mesReferencia').value;
@@ -366,7 +364,7 @@ function restaurarDadosFixos() {
     }
 }
 
-// Inicialização e AUTO-UPDATE
+// Inicialização
 document.addEventListener('DOMContentLoaded', () => {
     // Listeners
     document.getElementById('btn-calcular').addEventListener('click', handleCalcular);
@@ -399,11 +397,11 @@ document.addEventListener('DOMContentLoaded', () => {
     alternarModoDias();
     preencherDiasMes();
     
-    // --- LÓGICA DE AUTO-UPDATE PWA ---
+    // --- ATUALIZAÇÃO FORÇADA DE PWA ---
     if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-        
         let refreshing = false;
-        // Quando o SW diz "mudei", a gente recarrega a página
+        
+        // Se o SW mudar o status, recarrega a página para pegar a versão nova
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (!refreshing) {
                 window.location.reload();
@@ -412,15 +410,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         navigator.serviceWorker.register('sw.js').then(reg => {
-            // Se encontrar uma atualização
-            reg.addEventListener('updatefound', () => {
-                const newWorker = reg.installing;
-                newWorker.addEventListener('statechange', () => {
-                    // Se o novo SW instalou, ele vai acionar o controllerchange
-                    // por causa do skipWaiting() no sw.js
-                    console.log('Novo SW estado:', newWorker.state);
-                });
-            });
+            // Força o check de update agora
+            reg.update();
+            // E a cada hora
+            setInterval(() => reg.update(), 3600000);
         });
     }
 });
