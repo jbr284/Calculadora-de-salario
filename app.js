@@ -1,4 +1,4 @@
-// app.js - VERSÃO FINAL: Correção Bug "Férias Partidas" (Sanduíche)
+// app.js - VERSÃO BLINDADA: Lógica Híbrida (Saída Pura vs Sanduíche)
 
 // --- 1. DADOS E REGRAS ---
 const regrasCalculo = {
@@ -177,7 +177,7 @@ function renderizarResultados(resultado) {
     mostrarResultados();
 }
 
-// --- LÓGICA DE FÉRIAS (3 MODOS) ---
+// --- LÓGICA DE FÉRIAS ---
 function alternarModoDias() {
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
     if(!opcaoSelecionada) return;
@@ -205,7 +205,7 @@ function alternarModoDias() {
     }
 }
 
-// --- CORREÇÃO DA MATEMÁTICA DE FÉRIAS ---
+// --- CÁLCULO INTELIGENTE DE FÉRIAS (HÍBRIDO) ---
 function calcularDiasProporcionaisFerias() {
     const mesRefStr = mesReferenciaInput.value; 
     const diaSelecionado = parseInt(inicioFeriasInput.value); 
@@ -231,18 +231,17 @@ function calcularDiasProporcionaisFerias() {
         return;
     }
 
-    // Datas base (Mês de referência)
+    // Datas base
     const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
-    // Cria datas "reais" para cálculo de interseção
     const inicioMes = new Date(anoRef, mesRef - 1, 1);
-    const fimMes = new Date(anoRef, mesRef, 0); // Último dia do mês
+    const fimMes = new Date(anoRef, mesRef, 0); // Último dia do mês (ex: 30 ou 31)
 
-    // Dia selecionado (Limitado ao último dia do mês para segurança)
+    // Dia selecionado (Limitado ao último dia)
     const diaValidado = Math.min(diaSelecionado, fimMes.getDate());
     
     let diasTrabalhados = 0;
 
-    // --- LÓGICA 2: SAÍDA DE FÉRIAS (Com cálculo de "Sanduíche") ---
+    // --- MODO 2: SAÍDA DE FÉRIAS (HÍBRIDO) ---
     if (modo === 'saida_ferias') {
         const duracao = parseInt(qtdDiasFeriasInput.value);
         if(!duracao) {
@@ -251,41 +250,50 @@ function calcularDiasProporcionaisFerias() {
             return;
         }
 
-        // Data de Início das Férias
+        // 1. Define Início e Fim das Férias
         const dataInicioFerias = new Date(anoRef, mesRef - 1, diaValidado);
-        
-        // Data de Fim das Férias (Inicio + Duração - 1)
         const dataFimFerias = new Date(dataInicioFerias);
         dataFimFerias.setDate(dataFimFerias.getDate() + duracao - 1);
 
-        // Calcula a INTERSEÇÃO: Quantos dias de férias caem DENTRO deste mês?
+        // 2. Calcula dias de férias DENTRO deste mês
         const inicioIntersecao = new Date(Math.max(inicioMes, dataInicioFerias));
         const fimIntersecao = new Date(Math.min(fimMes, dataFimFerias));
-
         let diasFeriasNoMes = 0;
         if (inicioIntersecao <= fimIntersecao) {
-            // Diferença em dias (+1 para incluir o dia inicial)
             const diffTempo = fimIntersecao - inicioIntersecao;
             diasFeriasNoMes = Math.ceil(diffTempo / (1000 * 60 * 60 * 24)) + 1;
         }
 
-        // Lógica de DP: Salário = 30 - DiasDeFériasNoMês
-        diasTrabalhados = 30 - diasFeriasNoMes;
+        // 3. DECISÃO HÍBRIDA:
+        // Se as férias acabam DENTRO do mês (Sanduíche), usamos regra 30 dias.
+        // Se as férias ULTRAPASSAM o mês (Saída Pura), usamos regra Dias Trabalhados.
         
+        let textoExplicativo = "";
+        
+        if (dataFimFerias <= fimMes) {
+            // Caso Sanduíche (Voltou a trabalhar): 30 - Dias de Férias
+            diasTrabalhados = 30 - diasFeriasNoMes;
+            textoExplicativo = "Sanduíche (Retornou ao trabalho)";
+        } else {
+            // Caso Saída Pura (Não voltou): Paga exatamente até o dia da saída
+            diasTrabalhados = diaValidado - 1;
+            textoExplicativo = "Saída (Não retornou no mês)";
+        }
+        
+        // Travas de segurança
         if (diasTrabalhados < 0) diasTrabalhados = 0;
         if (diasTrabalhados > 30) diasTrabalhados = 30;
 
         const fmt = d => d.toLocaleDateString('pt-BR');
         feedbackFerias.innerHTML = `
             Férias: <b>${fmt(dataInicioFerias)}</b> a <b>${fmt(dataFimFerias)}</b>.<br>
-            Dias de férias neste mês: <b>${diasFeriasNoMes}</b>.<br>
+            Tipo: <b>${textoExplicativo}</b>.<br>
             Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
         `;
     } 
     
-    // --- LÓGICA 3: RETORNO DE FÉRIAS (Mantém a lógica simples de retorno) ---
+    // --- MODO 3: RETORNO DE FÉRIAS (30 - Dias Perdidos) ---
     else if (modo === 'retorno_ferias') {
-        // Se voltou dia X, perdeu (X-1) dias de salário.
         const diasPerdidos = diaValidado - 1;
         diasTrabalhados = 30 - diasPerdidos;
 
