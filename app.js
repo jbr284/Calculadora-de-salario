@@ -1,4 +1,4 @@
-// app.js - VERSÃO FINAL: Network-First + Auto Update + Select Dias
+// app.js - VERSÃO FINAL: Correção Bug "Férias Partidas" (Sanduíche)
 
 // --- 1. DADOS E REGRAS ---
 const regrasCalculo = {
@@ -177,7 +177,7 @@ function renderizarResultados(resultado) {
     mostrarResultados();
 }
 
-// --- LÓGICA DE FÉRIAS ---
+// --- LÓGICA DE FÉRIAS (3 MODOS) ---
 function alternarModoDias() {
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
     if(!opcaoSelecionada) return;
@@ -205,6 +205,7 @@ function alternarModoDias() {
     }
 }
 
+// --- CORREÇÃO DA MATEMÁTICA DE FÉRIAS ---
 function calcularDiasProporcionaisFerias() {
     const mesRefStr = mesReferenciaInput.value; 
     const diaSelecionado = parseInt(inicioFeriasInput.value); 
@@ -230,25 +231,75 @@ function calcularDiasProporcionaisFerias() {
         return;
     }
 
+    // Datas base (Mês de referência)
     const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
-    const ultimoDiaMes = new Date(anoRef, mesRef, 0).getDate();
-    const diaValidado = Math.min(diaSelecionado, ultimoDiaMes);
-    const dataFormatada = `${diaValidado.toString().padStart(2,'0')}/${mesRef.toString().padStart(2,'0')}/${anoRef}`;
+    // Cria datas "reais" para cálculo de interseção
+    const inicioMes = new Date(anoRef, mesRef - 1, 1);
+    const fimMes = new Date(anoRef, mesRef, 0); // Último dia do mês
 
+    // Dia selecionado (Limitado ao último dia do mês para segurança)
+    const diaValidado = Math.min(diaSelecionado, fimMes.getDate());
+    
     let diasTrabalhados = 0;
 
+    // --- LÓGICA 2: SAÍDA DE FÉRIAS (Com cálculo de "Sanduíche") ---
     if (modo === 'saida_ferias') {
-        diasTrabalhados = diaValidado - 1;
-        if (diasTrabalhados < 0) diasTrabalhados = 0;
-        if (diasTrabalhados > 30) diasTrabalhados = 30; 
-        feedbackFerias.innerHTML = `Saída dia: <b>${dataFormatada}</b>.<br>Trabalhou até dia: <b>${(diaValidado-1)}</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
-    } else if (modo === 'retorno_ferias') {
-        const diasPerdidos = diaValidado - 1;
-        diasTrabalhados = 30 - diasPerdidos;
+        const duracao = parseInt(qtdDiasFeriasInput.value);
+        if(!duracao) {
+            diasTrabInput.value = "";
+            feedbackFerias.innerHTML = "Digite a Qtd de Dias de Férias.";
+            return;
+        }
+
+        // Data de Início das Férias
+        const dataInicioFerias = new Date(anoRef, mesRef - 1, diaValidado);
+        
+        // Data de Fim das Férias (Inicio + Duração - 1)
+        const dataFimFerias = new Date(dataInicioFerias);
+        dataFimFerias.setDate(dataFimFerias.getDate() + duracao - 1);
+
+        // Calcula a INTERSEÇÃO: Quantos dias de férias caem DENTRO deste mês?
+        const inicioIntersecao = new Date(Math.max(inicioMes, dataInicioFerias));
+        const fimIntersecao = new Date(Math.min(fimMes, dataFimFerias));
+
+        let diasFeriasNoMes = 0;
+        if (inicioIntersecao <= fimIntersecao) {
+            // Diferença em dias (+1 para incluir o dia inicial)
+            const diffTempo = fimIntersecao - inicioIntersecao;
+            diasFeriasNoMes = Math.ceil(diffTempo / (1000 * 60 * 60 * 24)) + 1;
+        }
+
+        // Lógica de DP: Salário = 30 - DiasDeFériasNoMês
+        diasTrabalhados = 30 - diasFeriasNoMes;
+        
         if (diasTrabalhados < 0) diasTrabalhados = 0;
         if (diasTrabalhados > 30) diasTrabalhados = 30;
-        feedbackFerias.innerHTML = `Retornou dia: <b>${dataFormatada}</b>.<br>Esteve fora: <b>${diasPerdidos} dias</b>.<br>Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.`;
+
+        const fmt = d => d.toLocaleDateString('pt-BR');
+        feedbackFerias.innerHTML = `
+            Férias: <b>${fmt(dataInicioFerias)}</b> a <b>${fmt(dataFimFerias)}</b>.<br>
+            Dias de férias neste mês: <b>${diasFeriasNoMes}</b>.<br>
+            Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
+        `;
+    } 
+    
+    // --- LÓGICA 3: RETORNO DE FÉRIAS (Mantém a lógica simples de retorno) ---
+    else if (modo === 'retorno_ferias') {
+        // Se voltou dia X, perdeu (X-1) dias de salário.
+        const diasPerdidos = diaValidado - 1;
+        diasTrabalhados = 30 - diasPerdidos;
+
+        if (diasTrabalhados < 0) diasTrabalhados = 0;
+        if (diasTrabalhados > 30) diasTrabalhados = 30;
+
+        const dataRetorno = new Date(anoRef, mesRef - 1, diaValidado);
+        feedbackFerias.innerHTML = `
+            Retornou dia: <b>${dataRetorno.toLocaleDateString('pt-BR')}</b>.<br>
+            Esteve fora: <b>${diasPerdidos} dias</b>.<br>
+            Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
+        `;
     }
+
     diasTrabInput.value = diasTrabalhados;
 }
 
@@ -364,7 +415,7 @@ function restaurarDadosFixos() {
     }
 }
 
-// Inicialização
+// Inicialização e AUTO-UPDATE
 document.addEventListener('DOMContentLoaded', () => {
     // Listeners
     document.getElementById('btn-calcular').addEventListener('click', handleCalcular);
@@ -397,11 +448,9 @@ document.addEventListener('DOMContentLoaded', () => {
     alternarModoDias();
     preencherDiasMes();
     
-    // --- ATUALIZAÇÃO FORÇADA DE PWA ---
+    // --- LÓGICA DE AUTO-UPDATE PWA ---
     if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
         let refreshing = false;
-        
-        // Se o SW mudar o status, recarrega a página para pegar a versão nova
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (!refreshing) {
                 window.location.reload();
@@ -410,9 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         navigator.serviceWorker.register('sw.js').then(reg => {
-            // Força o check de update agora
             reg.update();
-            // E a cada hora
             setInterval(() => reg.update(), 3600000);
         });
     }
