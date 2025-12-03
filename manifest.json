@@ -1,6 +1,6 @@
 {
-  "name": "Calculadora de Salário Modular DTC",
-  "short_name": "Salário Modular",
+  "name": "Calculadora de Salário DTC",
+  "short_name": "Salário DTC",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#f0f2f5",
@@ -11,14 +11,11 @@
       "src": "icons/icon-192-v2.png",
       "sizes": "192x192",
       "type": "image/png"
-    },
+    }, 
     {
       "src": "icons/icon-512-v2.png",
       "sizes": "512x512",
       "type": "image/png"
-    }
+    } 
   ]
-
 }
-
-
