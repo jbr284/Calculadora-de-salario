@@ -1,12 +1,12 @@
-const CACHE_NAME = 'salario-dtc-cache-v11'; // <--- MUDEI PARA v6
+const CACHE_NAME = 'salario-dtc-cache-v12'; // <--- MUDEI PARA v6
 const urlsToCache = [
   './',
   'index.html',
   'style.css',
   'app.js',
   'manifest.json',
-  'icons/icon-192.png',
-  'icons/icon-512.png'
+  'icons/icon-192-v2.png', 
+  'icons/icon-512-v2.png'
 ];
 
 self.addEventListener('install', event => {
@@ -69,6 +69,7 @@ self.addEventListener('fetch', event => {
     );
   }
 });
+
 
 
 
