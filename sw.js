@@ -1,4 +1,4 @@
-const CACHE_NAME = 'salario-dtc-cache-v13'; // <--- MUDEI PARA v6
+const CACHE_NAME = 'salario-dtc-cache-v14'; // <--- MUDEI PARA v6
 const urlsToCache = [
   './',
   'index.html',
@@ -69,6 +69,7 @@ self.addEventListener('fetch', event => {
     );
   }
 });
+
 
 
 
