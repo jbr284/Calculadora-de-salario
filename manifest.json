@@ -1,5 +1,5 @@
 {
-  "name": "Calculadora de Salário DTC",
+  "name": "Calculadora de Salário Modular",
   "short_name": "Salário DTC",
   "start_url": ".",
   "display": "standalone",
@@ -19,3 +19,4 @@
     } 
   ]
 }
+
