@@ -1,4 +1,5 @@
-{
+// regras.js
+export const regras = {
   "anoVigencia": 2025,
   "salarioMinimo": 1518.00,
   "tetoINSS": 8157.41,
@@ -28,4 +29,4 @@
     "plus_individual": 115,
     "plus_familiar": 180
   }
-}
+};
