@@ -1,4 +1,4 @@
-// app.js - VERSÃO MODULAR 🚀
+// app.js - VERSÃO MODULAR COM CORREÇÃO MENSALISTA 🚀
 
 import { regras } from './regras.js';
 import { calcularSalarioCompleto } from './calculadora-regras.js';
@@ -85,7 +85,7 @@ function renderizarResultados(resultado) {
     mostrarResultados();
 }
 
-// --- LÓGICA DE FÉRIAS ---
+// --- LÓGICA DE FÉRIAS CORRIGIDA (MENSALISTA 30 DIAS) ---
 function alternarModoDias() {
     const opcaoSelecionada = document.querySelector('input[name="tipoDias"]:checked');
     if(!opcaoSelecionada) return;
@@ -140,10 +140,11 @@ function calcularDiasProporcionaisFerias() {
     const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
     const inicioMes = new Date(anoRef, mesRef - 1, 1);
     const fimMes = new Date(anoRef, mesRef, 0); 
-
+    
     const diaValidado = Math.min(diaSelecionado, fimMes.getDate());
     
     let diasTrabalhados = 0;
+    let diasFeriasNoMes = 0;
 
     if (modo === 'saida_ferias') {
         const duracao = parseInt(qtdDiasFeriasInput.value);
@@ -159,49 +160,51 @@ function calcularDiasProporcionaisFerias() {
 
         const inicioIntersecao = new Date(Math.max(inicioMes, dataInicioFerias));
         const fimIntersecao = new Date(Math.min(fimMes, dataFimFerias));
-        let diasFeriasNoMes = 0;
+        
         if (inicioIntersecao <= fimIntersecao) {
             const diffTempo = fimIntersecao - inicioIntersecao;
             diasFeriasNoMes = Math.ceil(diffTempo / (1000 * 60 * 60 * 24)) + 1;
         }
 
-        let textoExplicativo = "";
-        if (dataFimFerias <= fimMes) {
-            diasTrabalhados = 30 - diasFeriasNoMes;
-            textoExplicativo = "Sanduíche (Retornou ao trabalho)";
-        } else {
-            diasTrabalhados = diaValidado - 1;
-            textoExplicativo = "Saída (Não retornou no mês)";
-        }
-        
-        if (diasTrabalhados < 0) diasTrabalhados = 0;
-        if (diasTrabalhados > 30) diasTrabalhados = 30;
+        // --- CORREÇÃO: REGRA DO MENSALISTA ---
+        // Sempre 30 menos os dias de férias gozados no mês.
+        diasTrabalhados = 30 - diasFeriasNoMes;
 
+        let textoExplicativo = "";
         const fmt = d => d.toLocaleDateString('pt-BR');
+        
+        if (dataFimFerias <= fimMes) {
+             textoExplicativo = "Sanduíche (Retornou ao trabalho)";
+        } else {
+             textoExplicativo = "Saída (Não retornou no mês)";
+        }
+
         feedbackFerias.innerHTML = `
-            Férias: <b>${fmt(dataInicioFerias)}</b> a <b>${fmt(dataFimFerias)}</b>.<br>
-            Tipo: <b>${textoExplicativo}</b>.<br>
-            Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
+            Férias neste mês: <b>${diasFeriasNoMes} dias</b>.<br>
+            Período: <b>${fmt(dataInicioFerias)}</b> a <b>${fmt(dataFimFerias)}</b>.<br>
+            Cálculo (30 - Férias): <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
         `;
     } 
     else if (modo === 'retorno_ferias') {
-        const diasPerdidos = diaValidado - 1;
-        diasTrabalhados = 30 - diasPerdidos;
-
-        if (diasTrabalhados < 0) diasTrabalhados = 0;
-        if (diasTrabalhados > 30) diasTrabalhados = 30;
+        // Ex: Retorno dia 10. Perdi 9 dias de férias. Saldo = 30 - 9 = 21.
+        const diasPerdidosFerias = diaValidado - 1;
+        diasTrabalhados = 30 - diasPerdidosFerias;
 
         const dataRetorno = new Date(anoRef, mesRef - 1, diaValidado);
         feedbackFerias.innerHTML = `
             Retornou dia: <b>${dataRetorno.toLocaleDateString('pt-BR')}</b>.<br>
-            Esteve fora: <b>${diasPerdidos} dias</b>.<br>
-            Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
+            Férias no mês: <b>${diasPerdidosFerias} dias</b>.<br>
+            Cálculo (30 - Férias): <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
         `;
     }
+
+    if (diasTrabalhados < 0) diasTrabalhados = 0;
+    if (diasTrabalhados > 30) diasTrabalhados = 30;
+
     diasTrabInput.value = diasTrabalhados;
 }
 
-// --- FUNÇÃO DE CÁLCULO (Atualizada com Módulos) ---
+// --- FUNÇÃO DE CÁLCULO ---
 function handleCalcular() {
     const inputs = {
         salario: parseFloat(document.getElementById('salario').value) || 0,
@@ -223,7 +226,7 @@ function handleCalcular() {
         descontarVT: document.getElementById('descontar_vt').value === 'sim'
     };
     
-    // Agora passamos as regras importadas!
+    // Importante: Passando as regras importadas
     const resultado = calcularSalarioCompleto(inputs, regras);
     renderizarResultados(resultado);
 }
@@ -345,6 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
     alternarModoDias();
     preencherDiasMes();
     
+    // --- ATUALIZAÇÃO AUTOMÁTICA ---
     if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
