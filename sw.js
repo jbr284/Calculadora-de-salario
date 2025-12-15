@@ -1,11 +1,11 @@
-const CACHE_NAME = 'salario-Modular-cache-v16'; // Mudei para v16
+const CACHE_NAME = 'salario-Modular-cache-v17'; 
 const urlsToCache = [
   './',
   'index.html',
   'style.css',
   'app.js',
-  'regras.js', // Novo arquivo
-  'calculadora-regras.js', // Novo arquivo (agora usado)
+  'regras.js',
+  'calculadora-regras.js',
   'manifest.json',
   'icons/icon-192-v2.png', 
   'icons/icon-512-v2.png'
@@ -38,6 +38,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
 
+  // Estratégia: Network First (Tenta rede, se falhar vai pro cache)
   if (requestUrl.pathname.endsWith('index.html') || 
       requestUrl.pathname.endsWith('app.js') || 
       requestUrl.pathname.endsWith('regras.js') || 
@@ -59,6 +60,7 @@ self.addEventListener('fetch', event => {
         })
     );
   } else {
+    // Estratégia: Cache First (Imagens e outros)
     event.respondWith(
       caches.match(event.request)
         .then(response => {
