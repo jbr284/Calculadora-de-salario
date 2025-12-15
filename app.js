@@ -1,101 +1,9 @@
-// app.js - VERSÃO BLINDADA: Lógica Híbrida (Saída Pura vs Sanduíche)
+// app.js - VERSÃO MODULAR 🚀
 
-// --- 1. DADOS E REGRAS ---
-const regrasCalculo = {
-  "anoVigencia": 2025,
-  "salarioMinimo": 1518.00,
-  "tetoINSS": 8157.41,
-  "percentualAdiantamento": 0.4,
-  "percentualAdicionalNoturno": 0.35,
-  "descontoFixoVA": 23.97,
-  "percentualVT": 0.06,
-  "valorSindicato": 47.5,
-  "deducaoPorDependenteIRRF": 189.59,
-  "tabelaINSS": [
-    { "ate": 1518.00, "aliquota": 0.075, "deduzir": 0 },
-    { "ate": 2793.88, "aliquota": 0.09, "deduzir": 22.77 },
-    { "ate": 4190.83, "aliquota": 0.12, "deduzir": 106.59 },
-    { "ate": 8157.41, "aliquota": 0.14, "deduzir": 190.41 }
-  ],
-  "tabelaIRRF": [
-    { "ate": 2428.80, "aliquota": 0, "deduzir": 0 },
-    { "ate": 2826.65, "aliquota": 0.075, "deduzir": 182.16 },
-    { "ate": 3751.05, "aliquota": 0.15, "deduzir": 394.16 },
-    { "ate": 4664.68, "aliquota": 0.225, "deduzir": 675.49 },
-    { "ate": "acima", "aliquota": 0.275, "deduzir": 908.73 }
-  ],
-  "planosSESI": {
-    "nenhum": 0,
-    "basico_individual": 29,
-    "basico_familiar": 58,
-    "plus_individual": 115,
-    "plus_familiar": 180
-  }
-};
+import { regras } from './regras.js';
+import { calcularSalarioCompleto } from './calculadora-regras.js';
 
-// --- 2. LÓGICA MATEMÁTICA ---
-function calcularINSS(baseDeCalculo, regras) {
-  if (baseDeCalculo > regras.tetoINSS) baseDeCalculo = regras.tetoINSS;
-  for (const faixa of regras.tabelaINSS) {
-    if (baseDeCalculo <= faixa.ate) return (baseDeCalculo * faixa.aliquota) - faixa.deduzir;
-  }
-  const ultima = regras.tabelaINSS[regras.tabelaINSS.length - 1];
-  return (baseDeCalculo * ultima.aliquota) - ultima.deduzir;
-}
-
-function calcularIRRF(baseDeCalculo, dependentes, regras) {
-  const deducao = dependentes * regras.deducaoPorDependenteIRRF;
-  const baseFinal = baseDeCalculo - deducao;
-  for (const faixa of regras.tabelaIRRF) {
-    if (faixa.ate === "acima" || baseFinal <= faixa.ate) return (baseFinal * faixa.aliquota) - faixa.deduzir;
-  }
-  return 0;
-}
-
-function calcularSalarioCompleto(inputs, regras) {
-  const { salario, diasTrab, dependentes, faltas, atrasos, he50, he60, he80, he100, he150, noturno, plano, sindicato, emprestimo, diasUteis, domFeriados, descontarVT } = inputs;
-
-  const valorDia = salario / 30;
-  const valorHora = salario / 220;
-
-  // Proventos
-  const vencBase = valorDia * diasTrab;
-  const valorHE50 = he50 * valorHora * 1.5;
-  const valorHE60 = he60 * valorHora * 1.6;
-  const valorHE80 = he80 * valorHora * 1.8;
-  const valorHE100 = he100 * valorHora * 2.0;
-  const valorHE150 = he150 * valorHora * 2.5;
-  const valorNoturno = noturno * valorHora * regras.percentualAdicionalNoturno;
-  
-  const totalHE = valorHE50 + valorHE60 + valorHE80 + valorHE100 + valorHE150;
-  const dsrHE = (diasUteis > 0) ? (totalHE / diasUteis) * domFeriados : 0;
-  const dsrNoturno = (diasUteis > 0) ? (valorNoturno / diasUteis) * domFeriados : 0;
-  const totalBruto = vencBase + totalHE + valorNoturno + dsrHE + dsrNoturno;
-
-  // Descontos
-  const fgts = totalBruto * 0.08;
-  const descontoFaltas = faltas * valorDia;
-  const descontoAtrasos = atrasos * valorHora;
-  const adiantamento = (salario / 30) * diasTrab * regras.percentualAdiantamento;
-  const inss = calcularINSS(totalBruto, regras);
-  const baseIRRF = totalBruto - inss;
-  const irrf = calcularIRRF(baseIRRF, dependentes, regras);
-  const descontoPlano = regras.planosSESI[plano] || 0;
-  const descontoSindicato = sindicato === 'sim' ? regras.valorSindicato : 0;
-  const descontoVA = regras.descontoFixoVA;
-  const descontoVT = descontarVT ? (salario * regras.percentualVT) : 0;
-
-  const totalDescontos = descontoFaltas + descontoAtrasos + descontoPlano + descontoSindicato + emprestimo + inss + irrf + descontoVA + adiantamento + descontoVT;
-  const liquido = totalBruto - totalDescontos;
-
-  return {
-    proventos: { vencBase, valorHE50, valorHE60, valorHE80, valorHE100, valorHE150, valorNoturno, dsrHE, dsrNoturno, totalBruto },
-    descontos: { descontoFaltas, descontoAtrasos, descontoPlano, descontoSindicato, emprestimo, inss, irrf, adiantamento, descontoVA, descontoVT, totalDescontos },
-    fgts, liquido
-  };
-}
-
-// --- 3. INTERFACE E EVENTOS ---
+// --- ELEMENTOS DO DOM ---
 const formView = document.getElementById('form-view');
 const resultView = document.getElementById('result-view');
 const resultContainer = document.getElementById('resultado-container');
@@ -104,7 +12,7 @@ const mesReferenciaInput = document.getElementById('mesReferencia');
 // Seletores de Férias
 const boxCalculoFerias = document.getElementById('box-calculo-ferias');
 const diasTrabInput = document.getElementById('diasTrab');
-const inicioFeriasInput = document.getElementById('inicioFerias'); // Select (1-31)
+const inicioFeriasInput = document.getElementById('inicioFerias'); 
 const qtdDiasFeriasInput = document.getElementById('qtdDiasFerias');
 const feedbackFerias = document.getElementById('feedback-ferias');
 
@@ -193,7 +101,6 @@ function alternarModoDias() {
         feedbackFerias.textContent = "";
     } else {
         boxCalculoFerias.classList.remove('hidden');
-        
         if (modo === 'retorno_ferias') {
             colQtd.classList.add('hidden'); 
             lblData.textContent = "Dia do Retorno"; 
@@ -205,7 +112,6 @@ function alternarModoDias() {
     }
 }
 
-// --- CÁLCULO INTELIGENTE DE FÉRIAS (HÍBRIDO) ---
 function calcularDiasProporcionaisFerias() {
     const mesRefStr = mesReferenciaInput.value; 
     const diaSelecionado = parseInt(inicioFeriasInput.value); 
@@ -231,17 +137,14 @@ function calcularDiasProporcionaisFerias() {
         return;
     }
 
-    // Datas base
     const [anoRef, mesRef] = mesRefStr.split('-').map(Number);
     const inicioMes = new Date(anoRef, mesRef - 1, 1);
-    const fimMes = new Date(anoRef, mesRef, 0); // Último dia do mês (ex: 30 ou 31)
+    const fimMes = new Date(anoRef, mesRef, 0); 
 
-    // Dia selecionado (Limitado ao último dia)
     const diaValidado = Math.min(diaSelecionado, fimMes.getDate());
     
     let diasTrabalhados = 0;
 
-    // --- MODO 2: SAÍDA DE FÉRIAS (HÍBRIDO) ---
     if (modo === 'saida_ferias') {
         const duracao = parseInt(qtdDiasFeriasInput.value);
         if(!duracao) {
@@ -250,12 +153,10 @@ function calcularDiasProporcionaisFerias() {
             return;
         }
 
-        // 1. Define Início e Fim das Férias
         const dataInicioFerias = new Date(anoRef, mesRef - 1, diaValidado);
         const dataFimFerias = new Date(dataInicioFerias);
         dataFimFerias.setDate(dataFimFerias.getDate() + duracao - 1);
 
-        // 2. Calcula dias de férias DENTRO deste mês
         const inicioIntersecao = new Date(Math.max(inicioMes, dataInicioFerias));
         const fimIntersecao = new Date(Math.min(fimMes, dataFimFerias));
         let diasFeriasNoMes = 0;
@@ -264,23 +165,15 @@ function calcularDiasProporcionaisFerias() {
             diasFeriasNoMes = Math.ceil(diffTempo / (1000 * 60 * 60 * 24)) + 1;
         }
 
-        // 3. DECISÃO HÍBRIDA:
-        // Se as férias acabam DENTRO do mês (Sanduíche), usamos regra 30 dias.
-        // Se as férias ULTRAPASSAM o mês (Saída Pura), usamos regra Dias Trabalhados.
-        
         let textoExplicativo = "";
-        
         if (dataFimFerias <= fimMes) {
-            // Caso Sanduíche (Voltou a trabalhar): 30 - Dias de Férias
             diasTrabalhados = 30 - diasFeriasNoMes;
             textoExplicativo = "Sanduíche (Retornou ao trabalho)";
         } else {
-            // Caso Saída Pura (Não voltou): Paga exatamente até o dia da saída
             diasTrabalhados = diaValidado - 1;
             textoExplicativo = "Saída (Não retornou no mês)";
         }
         
-        // Travas de segurança
         if (diasTrabalhados < 0) diasTrabalhados = 0;
         if (diasTrabalhados > 30) diasTrabalhados = 30;
 
@@ -291,8 +184,6 @@ function calcularDiasProporcionaisFerias() {
             Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
         `;
     } 
-    
-    // --- MODO 3: RETORNO DE FÉRIAS (30 - Dias Perdidos) ---
     else if (modo === 'retorno_ferias') {
         const diasPerdidos = diaValidado - 1;
         diasTrabalhados = 30 - diasPerdidos;
@@ -307,11 +198,10 @@ function calcularDiasProporcionaisFerias() {
             Saldo Salário: <b style="color:#0d47a1">${diasTrabalhados} dias</b>.
         `;
     }
-
     diasTrabInput.value = diasTrabalhados;
 }
 
-// --- FUNÇÕES AUXILIARES E INIT ---
+// --- FUNÇÃO DE CÁLCULO (Atualizada com Módulos) ---
 function handleCalcular() {
     const inputs = {
         salario: parseFloat(document.getElementById('salario').value) || 0,
@@ -332,7 +222,9 @@ function handleCalcular() {
         domFeriados: parseInt(document.getElementById('domFeriados').value) || 0,
         descontarVT: document.getElementById('descontar_vt').value === 'sim'
     };
-    const resultado = calcularSalarioCompleto(inputs, regrasCalculo);
+    
+    // Agora passamos as regras importadas!
+    const resultado = calcularSalarioCompleto(inputs, regras);
     renderizarResultados(resultado);
 }
 
@@ -423,9 +315,7 @@ function restaurarDadosFixos() {
     }
 }
 
-// Inicialização e AUTO-UPDATE
 document.addEventListener('DOMContentLoaded', () => {
-    // Listeners
     document.getElementById('btn-calcular').addEventListener('click', handleCalcular);
     document.getElementById('btn-voltar').addEventListener('click', mostrarFormulario);
     document.getElementById('btn-salvar').addEventListener('click', salvarDadosFixos);
@@ -439,7 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
     inicioFeriasInput.addEventListener('change', calcularDiasProporcionaisFerias);
     qtdDiasFeriasInput.addEventListener('input', calcularDiasProporcionaisFerias);
 
-    // Conversor Horas
     document.querySelectorAll('.hora-conversivel').forEach(campo => {
         campo.addEventListener('blur', function() {
             let valor = this.value.replace('h', ':').replace(',', '.').trim();
@@ -456,7 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
     alternarModoDias();
     preencherDiasMes();
     
-    // --- LÓGICA DE AUTO-UPDATE PWA ---
     if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
