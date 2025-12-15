@@ -1,5 +1,4 @@
-// calculadora-regras.js
-
+// Funções auxiliares (internas deste arquivo)
 function calcularINSS(baseDeCalculo, regras) {
   if (baseDeCalculo > regras.tetoINSS) {
     baseDeCalculo = regras.tetoINSS;
@@ -25,6 +24,7 @@ function calcularIRRF(baseDeCalculo, dependentes, regras) {
   return 0;
 }
 
+// Função Principal Exportada
 export function calcularSalarioCompleto(inputs, regras) {
   const { salario, diasTrab, dependentes, faltas, atrasos, he50, he60, he80, he100, he150, noturno, plano, sindicato, emprestimo, diasUteis, domFeriados, descontarVT } = inputs;
 
