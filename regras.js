@@ -1,4 +1,3 @@
-// regras.js
 export const regras = {
   "anoVigencia": 2025,
   "salarioMinimo": 1518.00,
