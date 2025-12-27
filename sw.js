@@ -1,4 +1,4 @@
-const CACHE_NAME = 'salario-Modular-cache-v18'; 
+const CACHE_NAME = 'salario-Modular-cache-v19'; 
 const urlsToCache = [
   './',
   'index.html',
@@ -69,4 +69,5 @@ self.addEventListener('fetch', event => {
     );
   }
 });
+
 
