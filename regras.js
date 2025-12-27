@@ -1,6 +1,6 @@
 export const regras = {
   "anoVigencia": 2026,
-  "salarioMinimo": 1518.00, // Valor projetado
+  "salarioMinimo": 1518.00,
   "tetoINSS": 8157.41,
   "percentualAdiantamento": 0.4,
   "percentualAdicionalNoturno": 0.35,
@@ -8,18 +8,19 @@ export const regras = {
   "percentualVT": 0.06,
   "valorSindicato": 47.5,
   
-  // Desconto Simplificado (Mantido o atual ou ajustado conforme tabela vigente em 2026)
+  // Desconto Simplificado (estimado, pode ser ajustado pelo governo)
   "descontoSimplificado": 564.80, 
   "deducaoPorDependenteIRRF": 189.59,
 
   // --- PARÂMETROS DA LEI 15.270 (Vigência Jan/2026) ---
   "novaRegra2026": {
     "ativo": true,
-    "limiteIsencao": 5000.00,
+    // A lei diz: rendimentos até 5000 são isentos.
+    "limiteIsencaoBruto": 5000.00,
     "faixaTransicaoFim": 7350.00,
-    // Fórmula: Redutor = 978.61 - (0.133145 * Base)
+    // Fórmula do Redutor: R$ 978,62 - (0,133145 x RendaTributavel)
     "fatorRedutor": 0.133145,
-    "parcelaFixaRedutor": 978.61
+    "parcelaFixaRedutor": 978.62
   },
 
   "tabelaINSS": [
@@ -29,7 +30,7 @@ export const regras = {
     { "ate": 8157.41, "aliquota": 0.14, "deduzir": 190.41 }
   ],
   
-  // Tabela Progressiva Padrão (Usada como base antes do Redutor)
+  // Tabela Progressiva Padrão (Usada para achar o imposto "cheio" antes do redutor)
   "tabelaIRRF": [
     { "ate": 2259.20, "aliquota": 0, "deduzir": 0 },
     { "ate": 2826.65, "aliquota": 0.075, "deduzir": 169.44 },
